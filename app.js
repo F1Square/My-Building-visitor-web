@@ -1,5 +1,5 @@
 // ── Config ───────────────────────────────────────────────────────────────────
-const BACKEND_URL = 'https://my-building-backend.onrender.com';
+const BACKEND_URL = 'http://10.10.5.59:5000';
 
 // ── Validation Regexes ───────────────────────────────────────────────────────
 // Full name: only letters + spaces, min 2 words, each word min 2 letters
