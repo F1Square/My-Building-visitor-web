@@ -1,81 +1,22 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Visitor Entry</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-
-  <!-- Loading -->
-  <div id="loadingView" class="center-view">
-    <div class="spinner"></div>
-    <p>Loading building info...</p>
-  </div>
-
-  <!-- Not Found -->
-  <div id="notFoundView" class="center-view hidden">
-    <div class="big-icon">🏚️</div>
-    <h2>Building Not Found</h2>
-    <p>The QR code link may be invalid or expired.</p>
-  </div>
-
-  <!-- Form -->
-  <div id="formView" class="hidden">
-    <div class="header">
-      <div class="icon">🏢</div>
-      <h1 id="buildingName">My Building</h1>
-      <p id="buildingAddress">Visitor Entry Form</p>
-    </div>
-
-    <div class="card">
-      <div class="field">
-        <label for="name">Full Name <span class="req">*</span></label>
-        <input id="name" type="text" placeholder="Your full name" autocomplete="name" />
-      </div>
-
-      <div class="field">
-        <label for="mobile">Mobile Number <span class="req">*</span></label>
-        <input id="mobile" type="tel" placeholder="10-digit mobile number" maxlength="10" inputmode="numeric" />
-      </div>
-
-      <div class="field">
-        <label for="flat_no">Visiting Flat No <span class="req">*</span> <small style="font-weight:400;color:#6B7280">(e.g. A-101, B-204)</small></label>
-        <input id="flat_no" type="text" placeholder="e.g. A-101 or AB-302" autocomplete="off" />
-      </div>
-
-      <div class="field">
-        <label for="purpose">Purpose of Visit <span class="req">*</span> <small style="font-weight:400;color:#6B7280">(min 3 words, text only)</small></label>
-        <textarea id="purpose" placeholder="e.g. Here for parcel delivery"></textarea>
-      </div>
-
-      <div class="field">
-        <label>Live Photo <span class="req">*</span> <small style="font-weight:400;color:#6B7280">(front camera selfie)</small></label>
-        <label class="photo-btn" for="photoInput">
-          <span class="photo-icon">🤳</span>
-          <span id="photoLabel">Take Selfie (Front Camera)</span>
-        </label>
-        <!-- user camera = front/selfie camera -->
-        <input id="photoInput" type="file" accept="image/*" capture="user" />
-        <img id="photoPreview" class="photo-preview hidden" alt="Preview" />
-      </div>
-
-      <div id="errMsg" class="error hidden"></div>
-
-      <button id="submitBtn" class="submit-btn" onclick="submitForm()">
-        Register Entry
-      </button>
-    </div>
-  </div>
-
-  <!-- Success -->
-  <div id="successView" class="center-view hidden">
-    <div class="big-icon">✅</div>
-    <h2 class="success-title">Entry Registered!</h2>
-    <p id="successMsg">Your visit has been recorded. The residents have been notified.</p>
-  </div>
-
-  <script src="app.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MyBuilding - Smart Society Management App</title>
+    <meta name="description" content="Manage your residential society with MyBuilding. Maintenance billing, visitor management, complaints, and more — all in one app." />
+    <meta name="author" content="MyBuilding" />
+    <meta property="og:title" content="MyBuilding - Smart Society Management App" />
+    <meta property="og:description" content="Manage your residential society effortlessly. Billing, visitors, complaints, announcements — all in one place." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@MyBuilding" />
+    <meta name="twitter:image" content="/og-image.png" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
