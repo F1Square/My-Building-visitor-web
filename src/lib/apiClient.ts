@@ -1,4 +1,7 @@
-const API_BASE = (import.meta.env.VITE_API_BASE as string) ?? 'https://my-building-backend.vercel.app/api';
+const _envBase = import.meta.env.VITE_API_BASE;
+const API_BASE: string = (_envBase && _envBase !== 'undefined')
+  ? _envBase
+  : 'https://my-building-backend.vercel.app/api';
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem('mb_token');
