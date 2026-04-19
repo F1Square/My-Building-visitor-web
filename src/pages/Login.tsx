@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Building2, ArrowLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-
-const API_BASE = import.meta.env.VITE_API_BASE as string;
+import { useAuth } from "../context/AuthContext";
+import api from "../lib/apiClient";
+import type { User, Subscription } from "../types";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -14,27 +15,25 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { login, isAuthenticated } = useAuth();
+
+  // Already authenticated — redirect via effect, not during render
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        toast({ title: "Login failed", description: data.error || "Invalid credentials", variant: "destructive" });
-      } else {
-        localStorage.setItem("mb_token", data.token);
-        localStorage.setItem("mb_user", JSON.stringify(data.user));
-        toast({ title: "Welcome back!", description: `Hello, ${data.user.name}` });
-        navigate("/dashboard");
-      }
-    } catch {
-      toast({ title: "Network error", description: "Could not reach server. Check your connection.", variant: "destructive" });
+      const data = await api.post<{ token: string; user: User; subscription?: Subscription }>("/auth/login", { email, password });
+      login(data.token, data.user, data.subscription);
+      toast({ title: "Welcome back!", description: `Hello, ${data.user.name}` });
+      navigate("/dashboard");
+    } catch (e: unknown) {
+      toast({ title: "Login failed", description: (e as Error).message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
