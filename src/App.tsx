@@ -15,6 +15,7 @@ import Register from "./pages/Register";
 import RegisterSociety from "./pages/RegisterSociety";
 import VisitorEntry from "./pages/VisitorEntry";
 import Join from "./pages/Join";
+import DeleteAccount from "./pages/DeleteAccount";
 import NotFound from "./pages/NotFound";
 
 // Dashboard pages
@@ -63,6 +64,7 @@ const App = () => (
             <Route path="/register-society" element={<RegisterSociety />} />
             <Route path="/entry/:building_id" element={<VisitorEntry />} />
             <Route path="/join" element={<Join />} />
+            <Route path="/delete-account" element={<DeleteAccount />} />
 
             {/* Protected dashboard routes */}
             <Route element={<ProtectedRoute />}>
