@@ -3,6 +3,8 @@ import { useAuth } from '../../context/AuthContext';
 import { LoadingSkeleton } from '../../components/ui/LoadingSkeleton';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
+import { DateSeparator } from '../../components/DateSeparator';
+import { isSameDay } from '../../lib/dateUtils';
 import { Send } from 'lucide-react';
 import api from '../../lib/apiClient';
 
@@ -72,16 +74,22 @@ export default function Chat() {
         {messages.length === 0 && (
           <p className="text-center text-gray-400 mt-12">No messages yet. Say hello! 👋</p>
         )}
-        {messages.map(m => {
+        {messages.map((m, idx) => {
           const isMe = m.user_id === user?.id;
+          const msgDate = new Date(m.created_at);
+          const prevDate = idx > 0 ? new Date(messages[idx - 1].created_at) : null;
+          const showSeparator = !prevDate || !isSameDay(msgDate, prevDate);
           return (
-            <div key={m.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${isMe ? 'bg-blue-600 text-white' : 'bg-white border border-gray-100 text-gray-900'}`}>
-                {!isMe && <p className="text-xs font-semibold mb-1 text-blue-600">{m.sender_name ?? 'Unknown'}</p>}
-                <p className="text-sm">{m.message}</p>
-                <p className={`text-[10px] mt-1 ${isMe ? 'text-blue-200' : 'text-gray-400'}`}>
-                  {new Date(m.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
-                </p>
+            <div key={m.id}>
+              {showSeparator && <DateSeparator date={msgDate} />}
+              <div className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${isMe ? 'bg-blue-600 text-white' : 'bg-white border border-gray-100 text-gray-900'}`}>
+                  {!isMe && <p className="text-xs font-semibold mb-1 text-blue-600">{m.sender_name ?? 'Unknown'}</p>}
+                  <p className="text-sm">{m.message}</p>
+                  <p className={`text-[10px] mt-1 ${isMe ? 'text-blue-200' : 'text-gray-400'}`}>
+                    {msgDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
               </div>
             </div>
           );
