@@ -40,7 +40,7 @@ export default function Complaints() {
   const isAdmin = user?.role === 'admin';
   const isPramukh = user?.role === 'pramukh';
   const canManage = isPramukh || isAdmin;
-  const hasActiveSub = subscription?.status === 'active' || canManage;
+  const hasActiveSub = subscription?.status === 'active' || isAdmin;
 
   const fetchComplaints = () => {
     setLoading(true);

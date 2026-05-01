@@ -72,8 +72,8 @@ export default function Home() {
     <div>
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{greeting}, {firstName} 👋</h1>
-        {user?.building_name && <p className="text-sm text-gray-500 mt-1">{user.building_name}</p>}
+        <h1 className="text-2xl font-bold text-gray-900">{user?.building_name || (user?.role === 'admin' ? 'Admin Panel' : 'My Building')} 👋</h1>
+
       </div>
 
       {/* Search */}

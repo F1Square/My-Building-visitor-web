@@ -1,15 +1,19 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { LoadingSkeleton } from '../../components/ui/LoadingSkeleton';
 import { Button } from '../../components/ui/button';
 import { useToast } from '../../components/ui/use-toast';
-import { Gift, Copy } from 'lucide-react';
+import { Gift, Copy, AlertCircle } from 'lucide-react';
 import api from '../../lib/apiClient';
 
 interface ReferCode { referral_code: string }
 interface Referral { id: string; reward_status: string; created_at: string }
 
 export default function Refer() {
+  const { user, subscription } = useAuth();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [code, setCode] = useState<string | null>(null);
   const [referrals, setReferrals] = useState<Referral[]>([]);
@@ -29,6 +33,20 @@ export default function Refer() {
     const link = `${window.location.origin}/register?ref=${code}`;
     navigator.clipboard.writeText(link).then(() => toast({ title: 'Link copied!' }));
   };
+
+  const isAdmin = user?.role === 'admin';
+  const hasActiveSub = subscription?.status === 'active' || isAdmin;
+
+  if (!hasActiveSub) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center">
+        <AlertCircle className="w-14 h-14 text-amber-400" />
+        <h2 className="text-xl font-bold text-gray-900">Subscription Required</h2>
+        <p className="text-gray-500 max-w-sm">The Refer & Earn module requires an active subscription.</p>
+        <Button onClick={() => navigate('/dashboard/subscribe')}>View Plans</Button>
+      </div>
+    );
+  }
 
   if (loading) return <div><LoadingSkeleton rows={2} /></div>;
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { LoadingSkeleton } from '../../components/ui/LoadingSkeleton';
@@ -15,7 +16,8 @@ import api from '../../lib/apiClient';
 import type { SocietyRule } from '../../types';
 
 export default function SocietyRules() {
-  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { user, subscription } = useAuth();
   const { toast } = useToast();
   const [rules, setRules] = useState<SocietyRule[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,8 +29,10 @@ export default function SocietyRules() {
   const [submitting, setSubmitting] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const canManage = user?.role === 'pramukh' || user?.role === 'admin';
-  const canDelete = user?.role === 'admin';
+  const isAdmin = user?.role === 'admin';
+  const canManage = user?.role === 'pramukh' || isAdmin;
+  const canDelete = isAdmin;
+  const hasActiveSub = subscription?.status === 'active' || isAdmin;
 
   const fetchRules = () => {
     setLoading(true); setError('');
@@ -77,6 +81,17 @@ export default function SocietyRules() {
       toast({ title: 'Error', description: (e as Error).message, variant: 'destructive' });
     } finally { setDeleteId(null); }
   };
+
+  if (!hasActiveSub) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center">
+        <BookOpen className="w-14 h-14 text-amber-400" />
+        <h2 className="text-xl font-bold text-gray-900">Subscription Required</h2>
+        <p className="text-gray-500 max-w-sm">The Society Rules module requires an active subscription.</p>
+        <Button onClick={() => navigate('/dashboard/subscribe')}>View Plans</Button>
+      </div>
+    );
+  }
 
   if (loading) return <div><LoadingSkeleton /></div>;
   if (error) return <ErrorState message={error} onRetry={fetchRules} />;
