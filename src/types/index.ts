@@ -94,8 +94,9 @@ export interface Complaint {
   description: string;
   status: 'open' | 'in_progress' | 'resolved';
   photo_url?: string;
+  remark?: string;
   pramukh_remark?: string;
-  users?: { name: string };
+  users?: { name: string; flat_no?: string; wing?: string };
   created_at: string;
 }
 
@@ -172,6 +173,14 @@ export interface Building {
   pramukh_name?: string;
   member_count?: number;
   subscription_status?: string;
+  has_wings?: boolean;
+  late_fees_enabled?: boolean;
+  late_fees_amount?: number;
+  water_reading_enabled?: boolean;
+  payment_method?: string;
+  society_logo?: string;
+  payment_tc?: string;
+  created_at?: string;
 }
 
 export interface ActivityLog {

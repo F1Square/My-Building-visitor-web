@@ -24,7 +24,7 @@ export default function Complaints() {
   const { toast } = useToast();
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Forms
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ title: '', category: '', description: '' });
@@ -50,7 +50,7 @@ export default function Complaints() {
 
     api.get<Complaint[]>(endpoint).then(data => {
       setComplaints(Array.isArray(data) ? data : []);
-    }).catch(() => {}).finally(() => setLoading(false));
+    }).catch(() => { }).finally(() => setLoading(false));
   };
 
   useEffect(() => { fetchComplaints(); }, []);
@@ -180,18 +180,18 @@ export default function Complaints() {
           {detail && (
             <div className="space-y-4 mt-2">
               {detail.photo_url && <img src={detail.photo_url} alt="complaint" className="w-full h-40 object-cover rounded-xl" />}
-              
+
               <div className="flex items-center gap-2">
                 <Badge variant={STATUS_COLORS[detail.status]}>{STATUS_LABELS[detail.status]}</Badge>
                 {detail.category && <span className="text-sm text-gray-500">{detail.category}</span>}
               </div>
-              
+
               <p className="text-sm text-gray-700">{detail.description}</p>
-              
+
               {canManage && detail.users && (
                 <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
                   <p className="text-xs font-semibold text-gray-500 mb-1">Reported By</p>
-                  <p className="text-sm text-gray-900">{detail.users.name} {detail.users.flat_no ? `(Flat ${detail.users.flat_no})` : ''}</p>
+                  <p className="text-sm text-gray-900">{detail.users.name} {detail.users.flat_no ? `(${detail.users.wing ? detail.users.wing + '-' : ''}${detail.users.flat_no})` : ''}</p>
                 </div>
               )}
 
@@ -207,7 +207,7 @@ export default function Complaints() {
               {canManage && (
                 <div className="mt-4 border-t pt-4 space-y-3">
                   <p className="font-semibold text-gray-900 text-sm">Manage Complaint</p>
-                  
+
                   <div className="flex gap-2">
                     {STATUSES.map(s => (
                       <button key={s} onClick={() => setEditStatus(s)}
@@ -218,7 +218,7 @@ export default function Complaints() {
                   </div>
 
                   <Textarea placeholder="Add a remark..." rows={2} value={editRemark} onChange={e => setEditRemark(e.target.value)} className="text-sm" />
-                  
+
                   <div className="flex gap-2 pt-2">
                     <Button className="flex-1" disabled={updating} onClick={handleUpdateStatus}>
                       {updating ? 'Saving...' : 'Save Updates'}

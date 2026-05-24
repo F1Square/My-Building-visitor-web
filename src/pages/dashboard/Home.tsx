@@ -11,7 +11,7 @@ import type { UnreadCounts } from '../../types';
 import * as LucideIcons from 'lucide-react';
 
 function DynamicIcon({ name, className }: { name: string; className?: string }) {
-  const Icon = (LucideIcons as Record<string, React.ComponentType<{ className?: string }>>)[name];
+  const Icon = (LucideIcons as unknown as Record<string, React.ComponentType<{ className?: string }>>)[name];
   if (!Icon) return <Building2 className={className} />;
   return <Icon className={className} />;
 }
