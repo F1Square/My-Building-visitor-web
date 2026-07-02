@@ -1,8 +1,6 @@
-/** Official MyBuilding app store links (same as mobile UpdateModal). */
-export const APP_LINKS = {
-  playStore: 'https://play.google.com/store/apps/details?id=com.f1square.mybuilding',
-  appStore: 'https://apps.apple.com/app/my-building',
-} as const;
+/** MyBuilding Android app — Google Play only (iOS coming later). */
+export const PLAY_STORE_URL =
+  'https://play.google.com/store/apps/details?id=com.f1square.mybuilding';
 
 export type MobileFeature =
   | 'subscription'
@@ -14,27 +12,71 @@ export type MobileFeature =
 
 export const MOBILE_FEATURE_COPY: Record<MobileFeature, { title: string; message: string }> = {
   subscription: {
-    title: 'Subscribe on mobile',
-    message: 'Plan purchase, upgrades, and secure payment are available in the MyBuilding mobile app. Download the app to subscribe or upgrade your plan.',
+    title: 'Subscribe in the app',
+    message: 'Pick your plan and pay securely in the MyBuilding Android app — takes under a minute.',
   },
   'maintenance-payment': {
-    title: 'Pay bills on mobile',
-    message: 'Online maintenance payments are processed in the MyBuilding mobile app for a secure checkout experience. Download the app to pay your bills.',
+    title: 'Pay bills in the app',
+    message: 'Online maintenance payments open in the MyBuilding app with a quick, secure checkout.',
   },
   'newspaper-addon': {
-    title: 'Newspaper add-on on mobile',
-    message: 'Purchase the newspaper add-on with in-app payment in the MyBuilding mobile app.',
+    title: 'Add newspaper in the app',
+    message: 'Unlock daily newspapers with a one-tap add-on purchase inside the MyBuilding app.',
   },
   'visitor-qr': {
-    title: 'QR poster on mobile',
-    message: 'Generate, download, and share visitor QR posters from the MyBuilding mobile app.',
+    title: 'QR posters in the app',
+    message: 'Download and print visitor QR posters for your gate — available in the MyBuilding app.',
   },
   'push-notifications': {
-    title: 'Notifications on mobile',
-    message: 'Real-time push notifications for visitors, bills, and announcements are available in the MyBuilding mobile app.',
+    title: 'Instant alerts in the app',
+    message: 'Get real-time notifications for visitors, bills, and announcements on Android.',
   },
   generic: {
-    title: 'Available on mobile',
-    message: 'This action is best experienced in the MyBuilding mobile app. Download it to continue.',
+    title: 'Continue in the app',
+    message: 'This feature works best in the MyBuilding Android app. Download it free on Google Play.',
   },
+};
+
+/** Avoid "Monthly Plan Plan" when API title already ends with Plan. */
+export function formatPlanHeading(title: string): string {
+  const t = title.trim();
+  if (/\bplan$/i.test(t)) return t;
+  return `${t} Plan`;
+}
+
+export const PLAN_ENGAGEMENT: Record<string, { tagline: string; description: string }> = {
+  monthly: {
+    tagline: 'Pay month to month',
+    description: '₹15 per month — full access to every module, no long-term lock-in.',
+  },
+  yearly: {
+    tagline: 'One bill for the whole year',
+    description: '₹180 for 12 months — same full access, paid once a year instead of every month.',
+  },
+  lifetime: {
+    tagline: 'Pay once, use forever',
+    description: '₹1,500 one-time — unlimited access with no renewal dates to worry about.',
+  },
+};
+
+/** Clear, standalone bullet points for the landing pricing cards (not tied to other plans). */
+export const PLAN_DISPLAY_FEATURES: Record<string, string[]> = {
+  monthly: [
+    'Billed every month at ₹15',
+    'All modules unlocked',
+    'Maintenance, visitors, chat & announcements',
+    'Cancel anytime — no yearly contract',
+  ],
+  yearly: [
+    'Billed once a year at ₹180',
+    'Covers 12 full months of access',
+    'All modules unlocked',
+    'One payment — no monthly billing',
+  ],
+  lifetime: [
+    'Single payment of ₹1,500',
+    'All modules unlocked — forever',
+    'No expiry date, no renewals',
+    'Includes all future app updates',
+  ],
 };

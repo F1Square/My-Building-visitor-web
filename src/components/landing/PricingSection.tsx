@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Check, Calendar, Star, Infinity } from "lucide-react";
+import { Check, Calendar, Star, Infinity, Smartphone } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { MobileAppPrompt } from "@/components/ui/MobileAppPrompt";
+import { PlayStoreButton } from "@/components/ui/MobileAppPrompt";
+import { PLAN_ENGAGEMENT, PLAN_DISPLAY_FEATURES, formatPlanHeading } from "@/lib/appLinks";
 import api from "@/lib/apiClient";
 import type { SubscriptionPlan } from "@/types";
 
@@ -20,31 +21,22 @@ function getPeriodLabel(months: number | null): string {
 }
 
 const FALLBACK_PLANS = [
-  {
-    slug: "monthly",
-    title: "Monthly",
-    description: "Billed every month. Cancel anytime.",
-    amount_paise: 1500,
-    months: 1,
-    features: ["Full access to all modules", "Maintenance billing & payments", "Visitor management", "Complaints & announcements"],
-  },
-  {
-    slug: "yearly",
-    title: "Yearly",
-    description: "Billed annually. Save ₹30 per year.",
-    amount_paise: 18000,
-    months: 12,
-    features: ["Everything in Monthly", "Save ₹30 per year", "No monthly hassle", "All modules included"],
-  },
-  {
-    slug: "lifetime",
-    title: "Lifetime",
-    description: "Pay once, use forever. Best value.",
-    amount_paise: 150000,
-    months: null,
-    features: ["Everything in Yearly", "No recurring charges", "Priority support", "All future features included"],
-  },
+  { slug: "monthly", title: "Monthly", amount_paise: 1500, months: 1 },
+  { slug: "yearly", title: "Yearly", amount_paise: 18000, months: 12 },
+  { slug: "lifetime", title: "Lifetime", amount_paise: 150000, months: null },
 ];
+
+function getFeatureList(slug: string): string[] {
+  return PLAN_DISPLAY_FEATURES[slug] ?? ["Full access to all modules"];
+}
+
+function getPlanCopy(slug: string, apiDescription?: string) {
+  const engagement = PLAN_ENGAGEMENT[slug];
+  return {
+    tagline: engagement?.tagline ?? "Built for modern societies",
+    description: engagement?.description ?? apiDescription ?? "Full access to every MyBuilding module.",
+  };
+}
 
 const PricingSection = () => {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
@@ -60,23 +52,27 @@ const PricingSection = () => {
       id: p.slug,
       slug: p.slug,
       title: p.title,
-      description: p.description,
       amount_paise: p.amount_paise,
       months: p.months,
       allow_newspaper_addon: p.months != null,
       sort_order: i,
-      features: p.features,
     }));
-    return source.map((p, i) => ({
-      ...p,
-      color: PLAN_COLORS[i % PLAN_COLORS.length],
-      Icon: PLAN_ICONS[i % PLAN_ICONS.length],
-      popular: p.months === 12,
-      best: p.months == null,
-      price: formatRupee(p.amount_paise),
-      period: getPeriodLabel(p.months),
-      featureList: p.features?.length ? p.features : ["Full access to all modules"],
-    }));
+    return source.map((p, i) => {
+      const copy = getPlanCopy(p.slug, p.description);
+      return {
+        ...p,
+        heading: formatPlanHeading(p.title),
+        tagline: copy.tagline,
+        description: copy.description,
+        color: PLAN_COLORS[i % PLAN_COLORS.length],
+        Icon: PLAN_ICONS[i % PLAN_ICONS.length],
+        popular: p.months === 12,
+        best: p.months == null,
+        price: formatRupee(p.amount_paise),
+        period: getPeriodLabel(p.months),
+        featureList: getFeatureList(p.slug),
+      };
+    });
   }, [plans]);
 
   return (
@@ -85,67 +81,78 @@ const PricingSection = () => {
         <div className="text-center max-w-2xl mx-auto mb-16">
           <p className="text-sm font-semibold text-primary uppercase tracking-wider mb-3">Pricing</p>
           <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4">
-            Simple, transparent pricing
+            Plans that grow with your society
           </h2>
-          <p className="text-muted-foreground text-lg">
-            One app, all features. Pick the plan that works for your society.
+          <p className="text-muted-foreground text-lg leading-relaxed">
+            Register on the web in minutes. Subscribe and pay inside the MyBuilding Android app — simple, secure, and built for Indian societies.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto items-stretch">
           {displayPlans.map((plan) => {
             const Icon = plan.Icon;
             return (
               <div
                 key={plan.slug}
-                className={`relative rounded-2xl border p-8 bg-card flex flex-col ${
+                className={`relative rounded-2xl border p-7 lg:p-8 bg-card flex flex-col transition-shadow hover:shadow-md ${
                   plan.best
-                    ? "border-green-500 shadow-xl shadow-green-500/10"
+                    ? "border-green-500/80 shadow-lg shadow-green-500/10 ring-1 ring-green-500/20"
                     : plan.popular
-                    ? "border-primary shadow-xl shadow-primary/10 scale-105"
+                    ? "border-primary shadow-lg shadow-primary/10 md:scale-[1.02] z-10"
                     : "border-border"
                 }`}
               >
                 {plan.best && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-green-500 text-white text-xs font-semibold whitespace-nowrap">
-                    BEST VALUE
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-green-600 text-white text-[11px] font-bold tracking-wide uppercase">
+                    Best value
                   </div>
                 )}
                 {plan.popular && !plan.best && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold whitespace-nowrap">
-                    Most Popular
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-primary text-primary-foreground text-[11px] font-bold tracking-wide uppercase">
+                    Most popular
                   </div>
                 )}
 
-                <div className="flex items-center gap-2 mb-1">
-                  <Icon className="w-5 h-5" style={{ color: plan.color }} />
-                  <h3 className="text-xl font-bold" style={{ color: plan.color }}>{plan.title} Plan</h3>
-                </div>
-                {plan.description && (
-                  <p className="text-sm text-muted-foreground mb-4">{plan.description}</p>
-                )}
-                <div className="mb-6 flex items-end gap-1">
-                  <span className="text-4xl font-extrabold">{plan.price}</span>
-                  <span className="text-muted-foreground text-sm mb-1">{plan.period}</span>
+                <div className="mb-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span
+                      className="w-9 h-9 rounded-lg flex items-center justify-center"
+                      style={{ backgroundColor: `${plan.color}18` }}
+                    >
+                      <Icon className="w-4 h-4" style={{ color: plan.color }} />
+                    </span>
+                    <div>
+                      <h3 className="text-lg font-bold leading-tight" style={{ color: plan.color }}>
+                        {plan.heading}
+                      </h3>
+                      <p className="text-xs font-medium text-muted-foreground">{plan.tagline}</p>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{plan.description}</p>
                 </div>
 
-                <ul className="space-y-3 mb-8 flex-1">
+                <div className="mb-6 flex items-baseline gap-1">
+                  <span className="text-4xl font-extrabold tracking-tight">{plan.price}</span>
+                  <span className="text-muted-foreground text-sm">{plan.period}</span>
+                </div>
+
+                <ul className="space-y-2.5 mb-8 flex-1">
                   {plan.featureList.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-sm">
+                    <li key={f} className="flex items-start gap-2.5 text-sm text-foreground/90">
                       <Check className="w-4 h-4 mt-0.5 shrink-0" style={{ color: plan.color }} />
-                      {f}
+                      <span>{f}</span>
                     </li>
                   ))}
                 </ul>
 
-                <Link to="/register-society">
+                <Link to="/register-society" className="block">
                   <Button
-                    className="w-full font-bold"
+                    className="w-full font-semibold"
                     size="lg"
                     style={plan.best ? { backgroundColor: "#16A34A", color: "white" } : undefined}
                     variant={plan.popular || plan.best ? "default" : "outline"}
                   >
-                    {plan.best ? "Get Lifetime Access" : "Get Started"}
+                    {plan.best ? "Register & go lifetime" : "Register your society"}
                   </Button>
                 </Link>
               </div>
@@ -153,12 +160,17 @@ const PricingSection = () => {
           })}
         </div>
 
-        <MobileAppPrompt
-          feature="subscription"
-          variant="banner"
-          className="max-w-3xl mx-auto mt-12"
-          message="Register your society on web, then subscribe and pay securely in the MyBuilding mobile app."
-        />
+        <div className="max-w-2xl mx-auto mt-14 text-center">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-blue-50 mb-4">
+            <Smartphone className="w-6 h-6 text-blue-600" />
+          </div>
+          <h3 className="text-lg font-bold text-foreground mb-2">Ready to subscribe?</h3>
+          <p className="text-sm text-muted-foreground leading-relaxed mb-5">
+            After registration, open the MyBuilding app on Android to pick a plan and pay securely.
+            iOS is on the way — Android users get the full experience today.
+          </p>
+          <PlayStoreButton label="Download on Google Play" />
+        </div>
       </div>
     </section>
   );
