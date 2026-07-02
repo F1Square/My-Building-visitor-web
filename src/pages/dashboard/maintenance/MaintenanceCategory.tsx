@@ -5,8 +5,11 @@ import { PageHeader } from '../../../components/ui/PageHeader';
 import { LoadingSkeleton } from '../../../components/ui/LoadingSkeleton';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { Badge } from '../../../components/ui/badge';
+import { Button } from '../../../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui/tabs';
-import { Receipt, Home } from 'lucide-react';
+import { useToast } from '../../../components/ui/use-toast';
+import { Receipt, Home, Banknote, Upload, Smartphone } from 'lucide-react';
+import { MobileAppPrompt, MobileOnlyButton } from '../../../components/ui/MobileAppPrompt';
 import api from '../../../lib/apiClient';
 
 interface PaymentRecord {
@@ -16,9 +19,10 @@ interface PaymentRecord {
   total_amount?: number;
   display_amount?: number;
   penalty_amount?: number;
-  status: 'pending' | 'paid' | 'receipt_uploaded';
+  status: 'pending' | 'paid' | 'receipt_uploaded' | 'partial';
   category: string;
   is_overdue?: boolean;
+  building_payment_method?: string;
   users?: { name: string; flat_no?: string };
   maintenance_bills?: {
     month?: number;
@@ -28,6 +32,19 @@ interface PaymentRecord {
     category?: string;
     penalty_amount?: number;
   };
+}
+
+function getPaymentActions(status: string, paymentMethod: string | null): ('pay_now' | 'mark_cash' | 'upload_receipt')[] {
+  if (status !== 'pending' && status !== 'partial') return [];
+  const m = paymentMethod ?? 'Online (Payment Gateway)';
+  const actions: ('pay_now' | 'mark_cash' | 'upload_receipt')[] = [];
+  if (m === 'Online (Payment Gateway)' || m === 'Both Cash & Online' || m === 'Cheque & Online') {
+    actions.push('pay_now');
+  }
+  if (m === 'Cash Only' || m === 'Both Cash & Online') actions.push('mark_cash');
+  if (m === 'Cheque' || m === 'Cheque & Online') actions.push('upload_receipt');
+  if (actions.length === 0) actions.push('pay_now');
+  return actions;
 }
 
 const MONTHS = ['', 'January', 'February', 'March', 'April', 'May', 'June',
@@ -47,23 +64,23 @@ const STATUS_COLOR: Record<string, 'default' | 'secondary' | 'destructive'> = {
 export default function MaintenanceCategory() {
   const { category } = useParams<{ category: string }>();
   const { user } = useAuth();
+  const { toast } = useToast();
   const [records, setRecords] = useState<PaymentRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
 
   const isPramukh = user?.role === 'pramukh';
   const isAdmin = user?.role === 'admin';
   const isManager = isPramukh || isAdmin;
 
-  useEffect(() => {
+  const loadRecords = () => {
     setLoading(true);
-    // Pramukh/admin: get all records for building; user: get own only
     const endpoint = isManager
       ? `/maintenance/payments?category=${category}`
       : `/maintenance/payments?mine=true&category=${category}`;
 
     api.get<PaymentRecord[]>(endpoint)
       .then(data => {
-        // Filter by category client-side as well (belt-and-suspenders)
         const filtered = data.filter(p => {
           const cat = p.category || p.maintenance_bills?.category || 'maintenance';
           return cat === category;
@@ -72,7 +89,42 @@ export default function MaintenanceCategory() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadRecords();
   }, [category, isManager]);
+
+  const buildingPaymentMethod = records[0]?.building_payment_method ?? null;
+
+  const markCash = async (recordId: string) => {
+    try {
+      await api.post(`/maintenance/payments/${recordId}/request-cash`);
+      toast({ title: 'Cash payment requested' });
+      loadRecords();
+    } catch (e: unknown) {
+      toast({ title: 'Error', description: (e as Error).message, variant: 'destructive' });
+    }
+  };
+
+  const uploadReceipt = async (recordId: string, file: File) => {
+    setUploadingId(recordId);
+    try {
+      const reader = new FileReader();
+      const base64 = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      await api.patch(`/maintenance/payments/${recordId}/receipt`, { receipt_url: base64 });
+      toast({ title: 'Receipt uploaded' });
+      loadRecords();
+    } catch (e: unknown) {
+      toast({ title: 'Upload failed', description: (e as Error).message, variant: 'destructive' });
+    } finally {
+      setUploadingId(null);
+    }
+  };
 
   const byStatus = (s: string) => records.filter(r => r.status === s);
   const pending = byStatus('pending');
@@ -132,10 +184,41 @@ export default function MaintenanceCategory() {
           </div>
         </div>
 
-        {/* Pay hint for user */}
-        {!isManager && r.status === 'pending' && (
-          <div className="mt-3 bg-amber-50 rounded-xl px-3 py-2 text-xs text-amber-700">
-            💡 To pay online, use the MyBuilding mobile app.
+        {/* Payment actions for residents */}
+        {!isManager && (r.status === 'pending' || r.status === 'partial') && (
+          <div className="space-y-2 mt-3">
+            {getPaymentActions(r.status, buildingPaymentMethod).includes('pay_now') && (
+              <MobileAppPrompt feature="maintenance-payment" variant="compact" />
+            )}
+            <div className="flex flex-wrap gap-2">
+            {getPaymentActions(r.status, buildingPaymentMethod).includes('pay_now') && (
+              <MobileOnlyButton feature="maintenance-payment" className="gap-1 h-8 text-xs px-3">
+                <Smartphone className="w-3.5 h-3.5" /> Pay in app
+              </MobileOnlyButton>
+            )}
+            {getPaymentActions(r.status, buildingPaymentMethod).includes('mark_cash') && (
+              <Button size="sm" variant="outline" className="gap-1" onClick={() => markCash(r.id)}>
+                <Banknote className="w-3.5 h-3.5" /> Mark Cash
+              </Button>
+            )}
+            {getPaymentActions(r.status, buildingPaymentMethod).includes('upload_receipt') && (
+              <label className="inline-flex">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={e => {
+                    const f = e.target.files?.[0];
+                    if (f) void uploadReceipt(r.id, f);
+                    e.target.value = '';
+                  }}
+                />
+                <Button size="sm" variant="outline" className="gap-1" disabled={uploadingId === r.id} asChild>
+                  <span><Upload className="w-3.5 h-3.5" /> {uploadingId === r.id ? 'Uploading...' : 'Upload Receipt'}</span>
+                </Button>
+              </label>
+            )}
+            </div>
           </div>
         )}
       </div>

@@ -26,7 +26,11 @@ export const MODULE_VISIBILITY: Record<string, string[]> = {
   watchman: ['visitors','helpline'],
 };
 
-export const SUBSCRIPTION_GATED_MODULES = ['complaints', 'chat', 'newspaper', 'refer', 'society-rules'];
+export const SUBSCRIPTION_GATED_MODULES = [
+  'maintenance', 'announcements', 'visitors', 'parking', 'chat',
+  'join-requests', 'details', 'helpline', 'members', 'expenses',
+  'refer', 'society-rules', 'complaints',
+];
 
 export const ALL_MODULES: ModuleConfig[] = [
   { key: 'details',           label: 'My Details',       icon: 'User',           path: '/dashboard/profile',              color: '#3B5FC0', bg: '#E8EEF9' },

@@ -28,7 +28,7 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const data = await api.post<{ token: string; user: User; subscription?: Subscription }>("/auth/login", { email, password });
+      const data = await api.post<{ token: string; user: User; subscription?: Subscription }>("/auth/login/unified", { email, password });
       login(data.token, data.user, data.subscription);
       toast({ title: "Welcome back!", description: `Hello, ${data.user.name}` });
       navigate("/dashboard");

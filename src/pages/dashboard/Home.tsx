@@ -4,7 +4,8 @@ import { useAuth } from '../../context/AuthContext';
 import { ALL_MODULES, MODULE_VISIBILITY, SUBSCRIPTION_GATED_MODULES, getGreeting, filterModules } from '../../lib/modules';
 import { ModuleTile } from '../../components/ui/ModuleTile';
 import { SearchInput } from '../../components/ui/SearchInput';
-import { Bell, Building2, UserPlus, PlusCircle } from 'lucide-react';
+import { MobileAppPrompt, MobileOnlyButton } from '../../components/ui/MobileAppPrompt';
+import { Bell, Building2, UserPlus, PlusCircle, Smartphone } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import api from '../../lib/apiClient';
 import type { UnreadCounts } from '../../types';
@@ -17,11 +18,12 @@ function DynamicIcon({ name, className }: { name: string; className?: string }) 
 }
 
 export default function Home() {
-  const { user, subscription } = useAuth();
+  const { user, subscription, hasActiveSubscription } = useAuth();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [unreadCounts, setUnreadCounts] = useState<UnreadCounts>({});
   const [showSubPrompt, setShowSubPrompt] = useState(false);
+  const [subPromptMessage, setSubPromptMessage] = useState('This feature requires an active subscription.');
 
   useEffect(() => {
     if (user?.building_id) {
@@ -34,15 +36,23 @@ export default function Home() {
   const visibleModules = ALL_MODULES.filter(m => visibleKeys.includes(m.key));
   const filtered = filterModules(visibleModules, query);
 
-  const hasActiveSub = subscription?.status === 'active';
+  const hasNewspaperAddon =
+    subscription?.newspaper_addon === true &&
+    (!subscription?.expires_at || new Date(subscription.expires_at) > new Date());
 
   const handleModuleClick = useCallback((key: string, path: string) => {
-    if (SUBSCRIPTION_GATED_MODULES.includes(key) && !hasActiveSub && role !== 'admin') {
+    if (key === 'newspaper' && role !== 'admin' && !hasNewspaperAddon) {
+      setSubPromptMessage('The Newspaper module requires an active subscription with the Newspaper add-on.');
+      setShowSubPrompt(true);
+      return;
+    }
+    if (SUBSCRIPTION_GATED_MODULES.includes(key) && !hasActiveSubscription && role !== 'admin') {
+      setSubPromptMessage('This feature requires an active subscription.');
       setShowSubPrompt(true);
       return;
     }
     navigate(path);
-  }, [hasActiveSub, navigate, role]);
+  }, [hasActiveSubscription, hasNewspaperAddon, navigate, role]);
 
   const greeting = getGreeting(new Date().getHours());
   const firstName = user?.name?.split(' ')[0] ?? '';
@@ -83,10 +93,17 @@ export default function Home() {
 
       {/* Subscription prompt */}
       {showSubPrompt && (
-        <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between gap-3">
-          <p className="text-sm text-amber-800">This feature requires an active subscription.</p>
-          <div className="flex gap-2">
-            <Button size="sm" onClick={() => navigate('/dashboard/subscribe')}>View Plans</Button>
+        <div className="mb-4 space-y-3">
+          <MobileAppPrompt
+            feature={subPromptMessage.includes('Newspaper') ? 'newspaper-addon' : 'subscription'}
+            variant="banner"
+            message={subPromptMessage}
+          />
+          <div className="flex gap-2 justify-end">
+            <Button size="sm" variant="outline" onClick={() => navigate('/dashboard/subscribe')}>View plans</Button>
+            <MobileOnlyButton feature="subscription" className="h-8 text-xs gap-1">
+              <Smartphone className="w-3.5 h-3.5" /> Get app
+            </MobileOnlyButton>
             <Button size="sm" variant="ghost" onClick={() => setShowSubPrompt(false)}>Dismiss</Button>
           </div>
         </div>
@@ -95,7 +112,8 @@ export default function Home() {
       {/* Module grid */}
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
         {filtered.map(m => {
-          const locked = SUBSCRIPTION_GATED_MODULES.includes(m.key) && !hasActiveSub && role !== 'admin';
+          const isNewspaperLocked = m.key === 'newspaper' && role !== 'admin' && !hasNewspaperAddon;
+          const locked = isNewspaperLocked || (SUBSCRIPTION_GATED_MODULES.includes(m.key) && !hasActiveSubscription && role !== 'admin');
           const badgeCount = Object.entries(unreadCounts).reduce((sum, [type, count]) => {
             // Map notification types to module keys
             const typeToModule: Record<string, string> = {

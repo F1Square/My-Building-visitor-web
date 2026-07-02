@@ -33,6 +33,8 @@ import Helpline from "./pages/dashboard/Helpline";
 import Newspaper from "./pages/dashboard/Newspaper";
 import SocietyRules from "./pages/dashboard/SocietyRules";
 import Subscribe from "./pages/dashboard/Subscribe";
+import MyPayments from "./pages/dashboard/MyPayments";
+import PaymentReview from "./pages/dashboard/PaymentReview";
 import Profile from "./pages/dashboard/Profile";
 import Refer from "./pages/dashboard/Refer";
 import JoinRequests from "./pages/dashboard/JoinRequests";
@@ -72,6 +74,8 @@ const App = () => (
                 <Route path="/dashboard" element={<Home />} />
                 <Route path="/dashboard/maintenance" element={<Maintenance />} />
                 <Route path="/dashboard/maintenance/:category" element={<MaintenanceCategory />} />
+                <Route path="/dashboard/my-payments" element={<MyPayments />} />
+                <Route path="/dashboard/payment-review" element={<PaymentReview />} />
                 <Route path="/dashboard/announcements" element={<Announcements />} />
                 <Route path="/dashboard/visitors" element={<Visitors />} />
                 <Route path="/dashboard/parking" element={<Parking />} />

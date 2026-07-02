@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../../compo
 import { Input } from '../../../components/ui/input';
 import { Label } from '../../../components/ui/label';
 import { useToast } from '../../../components/ui/use-toast';
-import { Wrench, Droplets, Receipt, Plus } from 'lucide-react';
+import { Wrench, Droplets, Receipt, Plus, Wallet } from 'lucide-react';
 import api from '../../../lib/apiClient';
 
 interface PaymentRecord {
@@ -109,9 +109,13 @@ export default function Maintenance() {
       <PageHeader
         title="Maintenance"
         subtitle={isPramukh || isAdmin ? 'Manage billing categories' : 'Select a billing category'}
-        action={isPramukh || isAdmin
-          ? <Button size="sm" onClick={() => setShowCreateBill(true)} className="gap-1"><Plus className="w-4 h-4" />Create Bill</Button>
-          : undefined}
+        action={
+          isPramukh || isAdmin
+            ? <Button size="sm" onClick={() => setShowCreateBill(true)} className="gap-1"><Plus className="w-4 h-4" />Create Bill</Button>
+            : <Button size="sm" variant="outline" onClick={() => navigate('/dashboard/my-payments')} className="gap-1">
+                <Wallet className="w-4 h-4" />My Payments
+              </Button>
+        }
       />
 
       <div className="space-y-4">

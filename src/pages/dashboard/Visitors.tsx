@@ -5,7 +5,8 @@ import { LoadingSkeleton } from '../../components/ui/LoadingSkeleton';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Button } from '../../components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog';
-import { QrCode, ChevronLeft, ChevronRight, Users } from 'lucide-react';
+import { QrCode, ChevronLeft, ChevronRight, Users, Smartphone } from 'lucide-react';
+import { MobileAppPrompt, MobileOnlyButton } from '../../components/ui/MobileAppPrompt';
 import api from '../../lib/apiClient';
 import type { Visitor } from '../../types';
 
@@ -56,10 +57,22 @@ export default function Visitors() {
   return (
     <div>
       <PageHeader title="Visitors" action={
-        <Button size="sm" variant="outline" onClick={shareQR} className="gap-1">
-          <QrCode className="w-4 h-4" /> Share QR
-        </Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={shareQR} className="gap-1">
+            <QrCode className="w-4 h-4" /> Copy link
+          </Button>
+          <MobileOnlyButton feature="visitor-qr" variant="outline" className="h-8 text-xs gap-1">
+            <Smartphone className="w-3.5 h-3.5" /> QR poster
+          </MobileOnlyButton>
+        </div>
       } />
+
+      <MobileAppPrompt
+        feature="visitor-qr"
+        variant="compact"
+        className="mb-4"
+        message="Download and print visitor QR posters from the MyBuilding mobile app. Web can copy the entry link only."
+      />
 
       {/* Calendar */}
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-4">

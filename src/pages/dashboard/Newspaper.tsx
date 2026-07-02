@@ -7,7 +7,8 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog';
 import { useToast } from '../../components/ui/use-toast';
-import { Newspaper, ExternalLink, Upload, AlertCircle } from 'lucide-react';
+import { Newspaper, ExternalLink, Upload, Smartphone } from 'lucide-react';
+import { MobileAppPrompt, MobileOnlyButton } from '../../components/ui/MobileAppPrompt';
 import api from '../../lib/apiClient';
 import type { NewspaperEdition } from '../../types';
 
@@ -51,11 +52,15 @@ export default function NewspaperPage() {
 
   if (!hasAddon) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center">
-        <AlertCircle className="w-14 h-14 text-amber-400" />
-        <h2 className="text-xl font-bold text-gray-900">Newspaper Add-On Required</h2>
-        <p className="text-gray-500 max-w-sm">Enable the newspaper add-on in your subscription to read daily newspapers.</p>
-        <Button onClick={() => window.location.href = '/dashboard/subscribe'}>View Plans</Button>
+      <div className="max-w-lg mx-auto space-y-4">
+        <PageHeader title="Newspaper" />
+        <MobileAppPrompt feature="newspaper-addon" variant="card" />
+        <div className="flex gap-2 justify-center">
+          <Button variant="outline" onClick={() => window.location.href = '/dashboard/subscribe'}>View plans</Button>
+          <MobileOnlyButton feature="newspaper-addon" className="gap-2">
+            <Smartphone className="w-4 h-4" /> Get app
+          </MobileOnlyButton>
+        </div>
       </div>
     );
   }

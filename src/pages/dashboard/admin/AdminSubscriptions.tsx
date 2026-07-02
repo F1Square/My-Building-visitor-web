@@ -6,14 +6,28 @@ import { Badge } from '../../../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui/tabs';
 import { CreditCard } from 'lucide-react';
 import api from '../../../lib/apiClient';
-import type { Subscription } from '../../../types';
+
+interface AdminSubscriptionRow {
+  id: string;
+  user_id: string;
+  plan: string;
+  status: string;
+  started_at?: string;
+  expires_at?: string | null;
+  paid_amount?: number | null;
+  promo_code_used?: string | null;
+  users?: { name?: string; email?: string; role?: string };
+}
 
 export default function AdminSubscriptions() {
-  const [subs, setSubs] = useState<Subscription[]>([]);
+  const [subs, setSubs] = useState<AdminSubscriptionRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get<Subscription[]>('/subscriptions').then(setSubs).catch(() => {}).finally(() => setLoading(false));
+    api.get<AdminSubscriptionRow[]>('/subscriptions/all?limit=200&offset=0')
+      .then(setSubs)
+      .catch(() => setSubs([]))
+      .finally(() => setLoading(false));
   }, []);
 
   if (loading) return <div><LoadingSkeleton /></div>;
@@ -22,14 +36,14 @@ export default function AdminSubscriptions() {
 
   return (
     <div>
-      <PageHeader title="Subscriptions" />
+      <PageHeader title="Subscriptions" subtitle={`${subs.length} total subscriptions`} />
       <Tabs defaultValue="active">
         <TabsList className="mb-4">
-          {['active','expired','cancelled'].map(s => (
+          {['active', 'expired', 'cancelled'].map(s => (
             <TabsTrigger key={s} value={s} className="capitalize">{s} ({byStatus(s).length})</TabsTrigger>
           ))}
         </TabsList>
-        {['active','expired','cancelled'].map(s => (
+        {['active', 'expired', 'cancelled'].map(s => (
           <TabsContent key={s} value={s}>
             {byStatus(s).length === 0 ? (
               <EmptyState icon={<CreditCard className="w-10 h-10 text-gray-300" />} title={`No ${s} subscriptions`} />
@@ -37,13 +51,32 @@ export default function AdminSubscriptions() {
               <div className="space-y-3">
                 {byStatus(s).map(sub => (
                   <div key={sub.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="font-semibold text-gray-900 capitalize">{sub.plan}</p>
-                        {sub.start_date && <p className="text-xs text-gray-400">Started: {new Date(sub.start_date).toLocaleDateString('en-IN')}</p>}
-                        {sub.expires_at && <p className="text-xs text-gray-400">Expires: {new Date(sub.expires_at).toLocaleDateString('en-IN')}</p>}
+                        {sub.users?.name && (
+                          <p className="text-sm text-gray-600">{sub.users.name} · {sub.users.email}</p>
+                        )}
+                        {sub.started_at && (
+                          <p className="text-xs text-gray-400">
+                            Started: {new Date(sub.started_at).toLocaleDateString('en-IN')}
+                          </p>
+                        )}
+                        {sub.expires_at && (
+                          <p className="text-xs text-gray-400">
+                            Expires: {new Date(sub.expires_at).toLocaleDateString('en-IN')}
+                          </p>
+                        )}
+                        {sub.paid_amount != null && (
+                          <p className="text-xs text-gray-400">Paid: ₹{sub.paid_amount}</p>
+                        )}
+                        {sub.promo_code_used && (
+                          <p className="text-xs text-green-600">Promo: {sub.promo_code_used}</p>
+                        )}
                       </div>
-                      <Badge variant={sub.status === 'active' ? 'default' : 'secondary'} className="capitalize">{sub.status}</Badge>
+                      <Badge variant={sub.status === 'active' ? 'default' : 'secondary'} className="capitalize shrink-0">
+                        {sub.status}
+                      </Badge>
                     </div>
                   </div>
                 ))}

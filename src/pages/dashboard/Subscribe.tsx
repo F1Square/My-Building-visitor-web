@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { LoadingSkeleton } from '../../components/ui/LoadingSkeleton';
@@ -7,131 +7,147 @@ import { Badge } from '../../components/ui/badge';
 import { Input } from '../../components/ui/input';
 import { Switch } from '../../components/ui/switch';
 import { useToast } from '../../components/ui/use-toast';
-import { CheckCircle2, CreditCard, Star, Zap, FileText, ArrowUp, Tag } from 'lucide-react';
+import { MobileAppPrompt, MobileOnlyButton } from '../../components/ui/MobileAppPrompt';
+import {
+  Calendar, Star, Infinity, CheckCircle2, Lock, Newspaper,
+  Tag, ArrowUp, X, Smartphone,
+} from 'lucide-react';
 import api from '../../lib/apiClient';
-import type { SubscriptionPlan, Promo } from '../../types';
+import type { SubscriptionPlan, PromoValidation } from '../../types';
 
-const PLAN_TIERS: Record<string, number> = { basic: 1, standard: 2, premium: 3, pro: 4, enterprise: 5 };
-const PLAN_ICONS: Record<string, string> = { basic: '📋', standard: '⭐', premium: '⭐', pro: '💎', enterprise: '🏆' };
+const PLAN_COLORS = ['#3B5FC0', '#F59E0B', '#16A34A', '#8B5CF6', '#EC4899'];
+const PLAN_ICONS = [Calendar, Star, Infinity, Star, Star];
 
-function getPlanTier(name: string): number {
-  return PLAN_TIERS[name.toLowerCase()] ?? 1;
+function formatRupee(paise: number): string {
+  return `₹${(paise / 100).toLocaleString('en-IN')}`;
 }
 
-function getPlanIcon(name: string): string {
-  return PLAN_ICONS[name.toLowerCase()] ?? '📋';
-}
-
-function getDaysRemaining(expiresAt: string | null): number | null {
-  if (!expiresAt) return null;
-  const diff = new Date(expiresAt).getTime() - Date.now();
-  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+function getPeriodLabel(months: number | null): string {
+  if (months == null) return 'one-time';
+  if (months === 12) return '/ year';
+  return '/ month';
 }
 
 export default function Subscribe() {
-  const { subscription, setSubscription } = useAuth();
+  const { subscription, hasActiveSubscription, refreshSubscription } = useAuth();
   const { toast } = useToast();
-  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
+
+  const [catalogPlans, setCatalogPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState(true);
-  const [purchasing, setPurchasing] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'my-plan' | 'plans'>(
-    subscription?.status === 'active' ? 'my-plan' : 'plans'
+    hasActiveSubscription ? 'my-plan' : 'plans',
   );
 
-  // Promo code
   const [promoCode, setPromoCode] = useState('');
-  const [promoData, setPromoData] = useState<Promo | null>(null);
+  const [promoResult, setPromoResult] = useState<PromoValidation | null>(null);
   const [promoLoading, setPromoLoading] = useState(false);
-  const [promoError, setPromoError] = useState('');
-
-  // Newspaper add-on
-  const [newspaperAddon, setNewspaperAddon] = useState(subscription?.newspaper_addon ?? false);
-  const [addonLoading, setAddonLoading] = useState(false);
+  const [includeNewspaper, setIncludeNewspaper] = useState(false);
+  const [newspaperLoading, setNewspaperLoading] = useState(false);
 
   useEffect(() => {
-    api.get<SubscriptionPlan[]>('/subscriptions/plans').then(setPlans).catch(() => {}).finally(() => setLoading(false));
+    api.get<SubscriptionPlan[]>('/subscriptions/plans')
+      .then(setCatalogPlans)
+      .catch(() => setCatalogPlans([]))
+      .finally(() => setLoading(false));
   }, []);
 
-  const handleApplyPromo = async () => {
+  const planRank = useMemo(() => {
+    const m: Record<string, number> = {};
+    [...catalogPlans]
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+      .forEach((p, i) => { m[p.slug] = i + 1; });
+    return m;
+  }, [catalogPlans]);
+
+  const displayPlans = useMemo(() => catalogPlans.map((p, i) => {
+    const addP = p.newspaper_addon_paise;
+    const addRupee = addP != null ? Math.round(addP / 100) : (p.months === 12 ? 36 : 3);
+    return {
+      ...p,
+      color: PLAN_COLORS[i % PLAN_COLORS.length],
+      Icon: PLAN_ICONS[i % PLAN_ICONS.length],
+      highlight: i === catalogPlans.length - 1 && catalogPlans.length > 0,
+      priceLabel: formatRupee(p.amount_paise),
+      period: getPeriodLabel(p.months),
+      allowNewspaper: !!p.allow_newspaper_addon && p.months != null,
+      newspaperAddonRupees: addRupee,
+      featureList: p.features?.length ? p.features : ['Full access to all modules'],
+    };
+  }), [catalogPlans]);
+
+  const minNewsRupee = useMemo(() => {
+    const vals = catalogPlans
+      .filter(p => p.months != null && p.allow_newspaper_addon)
+      .map(p => {
+        const addP = p.newspaper_addon_paise;
+        return addP != null ? Math.round(addP / 100) : (p.months === 12 ? 36 : 3);
+      });
+    return vals.length ? Math.min(...vals) : 3;
+  }, [catalogPlans]);
+
+  const currentCat = catalogPlans.find(c => c.slug === subscription?.plan);
+  const isLifetime = currentCat ? currentCat.months == null : subscription?.plan === 'lifetime';
+  const isYearly = currentCat ? currentCat.months === 12 : subscription?.plan === 'yearly';
+  const expiresAt = subscription?.expires_at ? new Date(subscription.expires_at) : null;
+  const daysLeft = expiresAt
+    ? Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    : null;
+
+  const applyPromo = async () => {
     if (!promoCode.trim()) return;
+    const planForPromo = catalogPlans[0]?.slug || 'monthly';
     setPromoLoading(true);
-    setPromoError('');
-    setPromoData(null);
     try {
-      const result = await api.post<Promo>('/subscriptions/validate-promo', { code: promoCode.trim() });
-      setPromoData(result);
-      toast({ title: 'Promo applied!', description: `Discount: ${result.discount_percent ?? result.discount}%` });
+      const result = await api.post<PromoValidation>('/promos/validate', {
+        code: promoCode.trim(),
+        plan: planForPromo,
+      });
+      setPromoResult(result);
+      toast({
+        title: 'Promo code valid',
+        description: 'Apply this code when subscribing in the mobile app.',
+      });
     } catch (e: unknown) {
-      setPromoError('Invalid or expired promo code.');
-    } finally { setPromoLoading(false); }
+      setPromoResult(null);
+      toast({ title: 'Invalid code', description: (e as Error).message, variant: 'destructive' });
+    } finally {
+      setPromoLoading(false);
+    }
   };
 
-  const getDiscountedPrice = (price: number): number => {
-    if (!promoData) return price;
-    const pct = promoData.discount_percent ?? promoData.discount ?? 0;
-    return Math.round(price * (1 - pct / 100));
-  };
-
-  const handlePurchase = async (planId: string, originalPrice: number) => {
-    setPurchasing(planId);
+  const disableNewspaperAddon = async () => {
+    if (!window.confirm('Are you sure you want to disable the newspaper add-on?')) return;
+    setNewspaperLoading(true);
     try {
-      const payload: Record<string, unknown> = { plan_id: planId };
-      if (promoData) payload.promo_code = promoCode;
-      const result = await api.post<{ subscription: typeof subscription }>('/subscriptions', payload);
-      if (result.subscription) setSubscription(result.subscription);
-      setPromoCode('');
-      setPromoData(null);
-      toast({ title: 'Subscription activated!', description: 'Your plan is now active.' });
+      await api.post('/subscriptions/newspaper-addon', { enable: false });
+      await refreshSubscription();
+      toast({ title: 'Newspaper add-on disabled' });
     } catch (e: unknown) {
       toast({ title: 'Error', description: (e as Error).message, variant: 'destructive' });
-    } finally { setPurchasing(null); }
+    } finally {
+      setNewspaperLoading(false);
+    }
   };
-
-  const handleUpgrade = async (planId: string) => {
-    setPurchasing(planId);
-    try {
-      const result = await api.post<{ subscription: typeof subscription }>('/subscriptions/upgrade', { plan_id: planId });
-      if (result.subscription) setSubscription(result.subscription);
-      toast({ title: 'Plan upgraded!', description: 'Your subscription has been upgraded.' });
-    } catch (e: unknown) {
-      toast({ title: 'Error', description: (e as Error).message, variant: 'destructive' });
-    } finally { setPurchasing(null); }
-  };
-
-  const handleNewspaperToggle = async (enabled: boolean) => {
-    setAddonLoading(true);
-    try {
-      await api.post('/subscriptions/newspaper-addon', { enabled });
-      setNewspaperAddon(enabled);
-      toast({ title: enabled ? 'Newspaper add-on enabled' : 'Newspaper add-on disabled' });
-    } catch (e: unknown) {
-      toast({ title: 'Error', description: (e as Error).message, variant: 'destructive' });
-    } finally { setAddonLoading(false); }
-  };
-
-  const daysRemaining = getDaysRemaining(subscription?.expires_at ?? null);
-  const currentTier = subscription ? getPlanTier(subscription.plan) : 0;
 
   if (loading) return <div><LoadingSkeleton rows={3} /></div>;
 
   return (
     <div>
-      <PageHeader title="Subscription" subtitle="Unlock all features for your society" />
+      <PageHeader title="Subscription" subtitle="View plans on web — subscribe in the mobile app" />
 
-      {/* Tabs — only show My Plan tab if active subscription */}
+      <MobileAppPrompt feature="subscription" variant="banner" className="mb-5" />
+
       <div className="flex gap-1 mb-5 bg-gray-100 rounded-xl p-1">
-        {subscription?.status === 'active' && (
-          <button
-            role="tab"
-            aria-selected={activeTab === 'my-plan'}
-            onClick={() => setActiveTab('my-plan')}
-            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
-              activeTab === 'my-plan' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            My Plan
-          </button>
-        )}
+        <button
+          role="tab"
+          aria-selected={activeTab === 'my-plan'}
+          onClick={() => setActiveTab('my-plan')}
+          className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+            activeTab === 'my-plan' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          My Plan
+        </button>
         <button
           role="tab"
           aria-selected={activeTab === 'plans'}
@@ -140,180 +156,241 @@ export default function Subscribe() {
             activeTab === 'plans' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'
           }`}
         >
-          Available Plans
+          Explore Plans
         </button>
       </div>
 
-      {/* MY PLAN TAB */}
-      {activeTab === 'my-plan' && subscription?.status === 'active' && (
+      {activeTab === 'my-plan' && (
         <div className="space-y-4">
-          {/* Active plan card */}
-          <div className="p-5 bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-2xl">
-            <div className="flex items-center gap-3 mb-3">
-              <CheckCircle2 className="w-6 h-6 text-green-600 shrink-0" />
-              <div>
-                <p className="font-bold text-green-800 text-lg">
-                  {getPlanIcon(subscription.plan)} {subscription.plan}
-                </p>
-                <p className="text-sm text-green-600">Active subscription</p>
-              </div>
-            </div>
+          {hasActiveSubscription && subscription ? (
+            <>
+              <div className="p-5 bg-white border border-gray-100 rounded-2xl shadow-sm">
+                <div className="flex items-start gap-4 mb-4">
+                  <div
+                    className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: (isLifetime ? '#16A34A' : isYearly ? '#F59E0B' : '#3B5FC0') + '20' }}
+                  >
+                    {isLifetime ? <Infinity className="w-6 h-6 text-green-600" /> : isYearly ? <Star className="w-6 h-6 text-amber-500" /> : <Calendar className="w-6 h-6 text-blue-600" />}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-bold text-lg text-gray-900">
+                      {currentCat?.title || subscription.plan}
+                    </p>
+                    <Badge className="bg-green-100 text-green-700 mt-1">Active</Badge>
+                  </div>
+                  <p className="font-bold text-gray-900">
+                    {currentCat
+                      ? `${formatRupee(currentCat.amount_paise)}${isLifetime ? '' : isYearly ? '/yr' : '/mo'}`
+                      : subscription.plan}
+                  </p>
+                </div>
 
-            {daysRemaining !== null && (
-              <div className="mb-3">
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-green-700 font-medium">{daysRemaining} days remaining</span>
-                  {subscription.expires_at && (
-                    <span className="text-green-600">
-                      Expires {new Date(subscription.expires_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                    </span>
+                {isLifetime ? (
+                  <p className="text-sm text-green-600 flex items-center gap-2">
+                    <Infinity className="w-4 h-4" /> Never expires — you&apos;re set for life
+                  </p>
+                ) : (
+                  <p className={`text-sm flex items-center gap-2 ${daysLeft !== null && daysLeft <= 5 ? 'text-red-600' : 'text-gray-600'}`}>
+                    {daysLeft !== null && daysLeft > 0 ? `${daysLeft} day${daysLeft !== 1 ? 's' : ''} remaining` : 'Expires today'}
+                  </p>
+                )}
+
+                {expiresAt && !isLifetime && (
+                  <p className="text-xs text-gray-500 mt-2">
+                    Renews on {expiresAt.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </p>
+                )}
+
+                <p className="text-sm text-green-600 mt-3 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4" /> All modules unlocked
+                </p>
+
+                {!isLifetime && (
+                  <Button variant="outline" className="w-full mt-4 gap-2" onClick={() => setActiveTab('plans')}>
+                    <ArrowUp className="w-4 h-4" />
+                    View upgrade options
+                  </Button>
+                )}
+              </div>
+
+              <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
+                    <Newspaper className="w-5 h-5 text-orange-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-gray-900">Newspaper</p>
+                    <p className="text-sm text-gray-500">Daily newspapers in English, Hindi & Gujarati</p>
+                  </div>
+                  {subscription.newspaper_addon && (
+                    <Badge className="bg-green-100 text-green-700">Active</Badge>
                   )}
                 </div>
-                <div className="w-full bg-green-200 rounded-full h-2">
-                  <div
-                    className="bg-green-500 h-2 rounded-full transition-all"
-                    style={{ width: `${Math.min(100, (daysRemaining / 30) * 100)}%` }}
-                  />
-                </div>
-              </div>
-            )}
 
-            {subscription.start_date && (
-              <p className="text-xs text-green-600">
-                Started {new Date(subscription.start_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                {subscription.newspaper_addon ? (
+                  <div className="text-center">
+                    <p className="text-sm text-green-600 mb-3">Access unlocked until your plan expires</p>
+                    <Button variant="ghost" className="text-red-600" disabled={newspaperLoading} onClick={disableNewspaperAddon}>
+                      Disable plan
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <MobileAppPrompt feature="newspaper-addon" variant="compact" className="mb-3" />
+                    <MobileOnlyButton feature="newspaper-addon" className="w-full gap-2">
+                      <Smartphone className="w-4 h-4" /> Add newspaper in mobile app
+                    </MobileOnlyButton>
+                  </>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="p-8 bg-white rounded-2xl shadow-sm border border-gray-100 text-center">
+              <Lock className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p className="font-bold text-lg text-gray-900">
+                {subscription?.status === 'expired' ? 'Subscription Expired' : 'No Active Subscription'}
               </p>
-            )}
-          </div>
-
-          {/* Newspaper add-on */}
-          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <FileText className="w-5 h-5 text-blue-500" />
-                <div>
-                  <p className="font-semibold text-gray-900">Newspaper Add-on</p>
-                  <p className="text-sm text-gray-500">Daily newspaper delivery · ₹3/month</p>
-                </div>
-              </div>
-              <Switch
-                checked={newspaperAddon}
-                onCheckedChange={handleNewspaperToggle}
-                disabled={addonLoading}
-                aria-label="newspaper-addon"
-              />
+              <p className="text-sm text-gray-500 mt-2 mb-4">
+                {subscription?.status === 'expired'
+                  ? 'Your plan has expired. Renew in the mobile app to regain access.'
+                  : 'Subscribe in the mobile app to unlock all features.'}
+              </p>
+              <MobileOnlyButton feature="subscription" className="gap-2">
+                <Smartphone className="w-4 h-4" /> Download app to subscribe
+              </MobileOnlyButton>
             </div>
-          </div>
-
-          {/* Upgrade prompt */}
-          <Button
-            variant="outline"
-            className="w-full gap-2"
-            onClick={() => setActiveTab('plans')}
-          >
-            <ArrowUp className="w-4 h-4" />
-            View Upgrade Options
-          </Button>
+          )}
         </div>
       )}
 
-      {/* AVAILABLE PLANS TAB */}
       {activeTab === 'plans' && (
         <div className="space-y-4">
-          {/* Promo code */}
+          <div>
+            <h2 className="text-lg font-bold text-gray-900">Choose a Plan</h2>
+            <p className="text-sm text-gray-500">Browse plans here — payment is completed in the mobile app</p>
+          </div>
+
+          <div
+            className={`flex items-center gap-3 p-4 rounded-2xl border transition-colors ${
+              includeNewspaper ? 'border-orange-400 bg-orange-50' : 'border-gray-200 bg-white'
+            }`}
+          >
+            <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center shrink-0">
+              <Newspaper className="w-5 h-5 text-orange-600" />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-gray-900">Newspaper add-on</p>
+              <p className="text-sm text-gray-500">Select when subscribing in the mobile app</p>
+              <p className="text-sm font-bold text-orange-600 mt-1">From +₹{minNewsRupee} / month tier</p>
+            </div>
+            <Switch checked={includeNewspaper} onCheckedChange={setIncludeNewspaper} disabled title="Preview only — toggle in mobile app at checkout" />
+          </div>
+
           <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
             <p className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
               <Tag className="w-4 h-4" /> Promo Code
             </p>
             <div className="flex gap-2">
               <Input
-                placeholder="Enter promo code"
+                placeholder="Check promo validity"
                 value={promoCode}
-                onChange={e => { setPromoCode(e.target.value); setPromoError(''); setPromoData(null); }}
-                className="flex-1"
+                onChange={e => { setPromoCode(e.target.value.toUpperCase()); setPromoResult(null); }}
+                className="flex-1 uppercase"
               />
-              <Button variant="outline" onClick={handleApplyPromo} disabled={promoLoading || !promoCode.trim()}>
-                {promoLoading ? '...' : 'Apply'}
+              <Button variant="outline" onClick={applyPromo} disabled={promoLoading || !promoCode.trim()}>
+                {promoLoading ? '...' : 'Check'}
               </Button>
             </div>
-            {promoData && (
-              <p className="text-sm text-green-600 mt-1">
-                ✓ {promoData.discount_percent ?? promoData.discount}% discount applied
-              </p>
+            {promoResult && (
+              <div className="flex items-center gap-2 mt-2 p-2 bg-green-50 rounded-lg text-sm text-green-700">
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <span className="flex-1">
+                  Valid — use code <strong>{promoResult.code}</strong> in the mobile app at checkout
+                  {promoResult.type === 'percent'
+                    ? ` (${promoResult.value}% off)`
+                    : ` (₹${promoResult.value} off)`}
+                </span>
+                <button type="button" onClick={() => { setPromoCode(''); setPromoResult(null); }}>
+                  <X className="w-4 h-4 text-gray-400" />
+                </button>
+              </div>
             )}
-            {promoError && <p className="text-sm text-red-500 mt-1">{promoError}</p>}
           </div>
 
-          {/* Plan cards */}
-          {plans.map(plan => {
-            const planTier = getPlanTier(plan.name);
-            const isCurrentPlan = subscription?.plan?.toLowerCase() === plan.name.toLowerCase() && subscription?.status === 'active';
-            const canUpgrade = subscription?.status === 'active' && planTier > currentTier;
-            const discountedPrice = getDiscountedPrice(plan.price);
+          {displayPlans.map(plan => {
+            const isCurrent = subscription?.plan === plan.slug && hasActiveSubscription;
+            const currentRank = hasActiveSubscription && subscription?.plan
+              ? (planRank[subscription.plan] ?? 0)
+              : 0;
+            const isLowerOrEqual = hasActiveSubscription && (planRank[plan.slug] ?? 0) <= currentRank && !isCurrent;
+            const PlanIcon = plan.Icon;
 
             return (
               <div
-                key={plan.id}
-                className={`bg-white rounded-2xl p-5 shadow-sm border ${isCurrentPlan ? 'border-green-300 ring-1 ring-green-200' : 'border-gray-100'}`}
+                key={plan.slug}
+                className={`relative bg-white rounded-2xl p-5 shadow-sm border-2 ${
+                  plan.highlight ? 'border-green-400' : isCurrent ? 'border-green-300' : 'border-gray-100'
+                }`}
               >
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xl">{getPlanIcon(plan.name)}</span>
-                      <p className="text-lg font-bold text-gray-900">{plan.name}</p>
-                      {isCurrentPlan && <Badge className="bg-green-100 text-green-700 text-xs">Current Plan</Badge>}
-                    </div>
-                    {plan.duration_days && <p className="text-sm text-gray-500">{plan.duration_days} days</p>}
+                {plan.highlight && (
+                  <Badge className="absolute -top-2.5 left-4 bg-green-500 text-white text-xs">BEST VALUE</Badge>
+                )}
+
+                <div className="flex items-start gap-4 mb-4">
+                  <div
+                    className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: plan.color + '20' }}
+                  >
+                    <PlanIcon className="w-6 h-6" style={{ color: plan.color }} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-bold text-gray-900">{plan.title}</p>
+                    {plan.description && <p className="text-xs text-gray-500 mt-0.5">{plan.description}</p>}
                   </div>
                   <div className="text-right">
-                    {promoData && discountedPrice < plan.price ? (
-                      <>
-                        <p className="text-sm text-gray-400 line-through">₹{plan.price}</p>
-                        <p className="text-2xl font-bold text-green-600">₹{discountedPrice}</p>
-                      </>
-                    ) : (
-                      <p className="text-2xl font-bold text-blue-600">₹{plan.price}</p>
-                    )}
+                    <p className="text-xl font-bold" style={{ color: plan.color }}>{plan.priceLabel}</p>
+                    <p className="text-xs text-gray-500">{plan.period}</p>
                   </div>
                 </div>
 
-                {plan.features && plan.features.length > 0 && (
-                  <ul className="space-y-1 mb-4">
-                    {plan.features.map(f => (
-                      <li key={f} className="flex items-center gap-2 text-sm text-gray-600">
-                        <span className="text-green-500 font-bold">✓</span> {f}
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                <ul className="space-y-1.5 mb-4">
+                  {plan.featureList.map(f => (
+                    <li key={f} className="flex items-center gap-2 text-sm text-gray-600">
+                      <CheckCircle2 className="w-4 h-4 shrink-0" style={{ color: plan.color }} />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
 
-                {isCurrentPlan ? (
+                {isCurrent ? (
                   <Button className="w-full" variant="outline" disabled>
-                    <CheckCircle2 className="w-4 h-4 mr-2 text-green-500" /> Active
+                    <CheckCircle2 className="w-4 h-4 mr-2 text-green-500" /> Current Plan
                   </Button>
-                ) : canUpgrade ? (
-                  <Button
-                    className="w-full gap-2 bg-gradient-to-r from-blue-600 to-indigo-600"
-                    disabled={purchasing === plan.id}
-                    onClick={() => handleUpgrade(plan.id)}
-                  >
-                    <Zap className="w-4 h-4" />
-                    {purchasing === plan.id ? 'Upgrading...' : 'Upgrade to ' + plan.name}
+                ) : isLowerOrEqual ? (
+                  <Button className="w-full" variant="outline" disabled>
+                    <Lock className="w-4 h-4 mr-2" /> Not Available
                   </Button>
                 ) : (
-                  <Button
-                    className="w-full gap-2"
-                    disabled={purchasing === plan.id}
-                    onClick={() => handlePurchase(plan.id, plan.price)}
+                  <MobileOnlyButton
+                    feature="subscription"
+                    className="w-full text-white gap-2"
+                    style={{ backgroundColor: plan.color }}
+                    disabled={isLowerOrEqual}
                   >
-                    <CreditCard className="w-4 h-4" />
-                    {purchasing === plan.id ? 'Processing...' : 'Purchase Plan'}
-                  </Button>
+                    <Smartphone className="w-4 h-4" />
+                    {hasActiveSubscription ? `Upgrade — ${plan.priceLabel}` : `Subscribe — ${plan.priceLabel}`}
+                    {includeNewspaper && plan.allowNewspaper ? ` + ₹${plan.newspaperAddonRupees} newspaper` : ''}
+                    {promoResult ? ` → ₹${promoResult.final_amount}` : ''}
+                    <span className="text-xs opacity-90 ml-1">(mobile app)</span>
+                  </MobileOnlyButton>
                 )}
               </div>
             );
           })}
 
-          {plans.length === 0 && <p className="text-center text-gray-400 py-8">No plans available</p>}
+          {displayPlans.length === 0 && (
+            <p className="text-center text-gray-400 py-8">Plans are not available. Please try again later.</p>
+          )}
         </div>
       )}
     </div>

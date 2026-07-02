@@ -5,6 +5,7 @@ export interface User {
   phone?: string;
   flat_no?: string;
   wing?: string;
+  total_members?: number;
   role: 'user' | 'pramukh' | 'admin' | 'watchman';
   building_id: string | null;
   building_name?: string;
@@ -148,10 +149,27 @@ export interface SocietyRule {
 
 export interface SubscriptionPlan {
   id: string;
-  name: string;
-  price: number;
-  duration_days?: number;
+  slug: string;
+  title: string;
+  description?: string;
+  amount_paise: number;
+  months: number | null;
+  allow_newspaper_addon: boolean;
+  newspaper_addon_paise?: number | null;
+  sort_order: number;
   features?: string[];
+}
+
+export interface PromoValidation {
+  valid: boolean;
+  promo_id: string;
+  code: string;
+  type: 'percent' | 'fixed';
+  value: number;
+  description?: string;
+  original_amount: number;
+  discount_amount: number;
+  final_amount: number;
 }
 
 export interface JoinRequest {
