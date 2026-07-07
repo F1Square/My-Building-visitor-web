@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { BuildingSelect, AdminBuildingPrompt } from '../../components/admin/BuildingSelect';
+import { useAdminBuilding } from '../../hooks/useAdminBuilding';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { LoadingSkeleton } from '../../components/ui/LoadingSkeleton';
 import { ErrorState } from '../../components/ui/ErrorState';
@@ -19,6 +21,15 @@ export default function SocietyRules() {
   const navigate = useNavigate();
   const { user, subscription } = useAuth();
   const { toast } = useToast();
+  const {
+    isAdmin: isAdminRole,
+    buildings,
+    buildingsLoading,
+    selectedBuilding,
+    selectBuilding,
+    buildingId,
+    needsBuilding,
+  } = useAdminBuilding();
   const [rules, setRules] = useState<SocietyRule[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -35,20 +46,25 @@ export default function SocietyRules() {
   const hasActiveSub = subscription?.status === 'active' || isAdmin;
 
   const fetchRules = () => {
+    if (needsBuilding) {
+      setRules([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true); setError('');
-    api.get<SocietyRule[]>('/society-rules')
+    api.get<SocietyRule[]>('/society-rules', buildingId ? { building_id: buildingId } : undefined)
       .then(setRules)
       .catch(e => setError(e.message))
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { fetchRules(); }, []);
+  useEffect(() => { fetchRules(); }, [buildingId, needsBuilding]);
 
   const handleAdd = async () => {
     if (!form.title.trim()) return;
     setSubmitting(true);
     try {
-      await api.post('/society-rules', form);
+      await api.post('/society-rules', { ...form, ...(buildingId ? { building_id: buildingId } : {}) });
       toast({ title: 'Rule added' });
       setShowForm(false);
       setForm({ title: '', description: '' });
@@ -93,11 +109,17 @@ export default function SocietyRules() {
     );
   }
 
-  if (loading) return <div><LoadingSkeleton /></div>;
-  if (error) return <ErrorState message={error} onRetry={fetchRules} />;
+  if (loading && !needsBuilding) return <div><LoadingSkeleton /></div>;
+  if (error && !needsBuilding) return <ErrorState message={error} onRetry={fetchRules} />;
 
   return (
     <div>
+      {isAdminRole && (
+        <BuildingSelect className="mb-4" buildings={buildings} loading={buildingsLoading} value={selectedBuilding} onChange={selectBuilding} />
+      )}
+      {needsBuilding ? (
+        <AdminBuildingPrompt />
+      ) : (<>
       <PageHeader title="Society Rules"
         action={canManage ? <Button size="sm" onClick={() => {
           setForm({ title: '', description: '' });
@@ -161,6 +183,7 @@ export default function SocietyRules() {
         confirmLabel="Delete"
         onConfirm={handleDelete}
       />
+      </>)}
     </div>
   );
 }

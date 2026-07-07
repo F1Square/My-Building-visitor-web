@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { BuildingSelect, AdminBuildingPrompt } from '../../components/admin/BuildingSelect';
+import { useAdminBuilding } from '../../hooks/useAdminBuilding';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { LoadingSkeleton } from '../../components/ui/LoadingSkeleton';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -33,6 +35,15 @@ function getVehicleIcon(type: string) {
 export default function Parking() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const {
+    isAdmin: isAdminRole,
+    buildings,
+    buildingsLoading,
+    selectedBuilding,
+    selectBuilding,
+    buildingId,
+    needsBuilding,
+  } = useAdminBuilding();
   const isAdmin = user?.role === 'admin';
   const isPramukh = user?.role === 'pramukh';
   const canSendReminder = isAdmin || isPramukh;
@@ -63,20 +74,32 @@ export default function Parking() {
   const [reportSubmitting, setReportSubmitting] = useState(false);
 
   const fetchVehicles = () => {
+    if (needsBuilding) {
+      setVehicles([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
-    api.get<Vehicle[]>('/vehicles/building').then(setVehicles).catch(() => {}).finally(() => setLoading(false));
+    api.get<Vehicle[]>('/vehicles/building', buildingId ? { building_id: buildingId } : undefined)
+      .then(setVehicles).catch(() => {}).finally(() => setLoading(false));
   };
 
   const fetchReports = () => {
+    if (needsBuilding) {
+      setReports([]);
+      setReportsLoading(false);
+      return;
+    }
     setReportsLoading(true);
-    api.get<ParkingReport[]>('/vehicles/reports').then(setReports).catch(() => {}).finally(() => setReportsLoading(false));
+    api.get<ParkingReport[]>('/vehicles/reports', buildingId ? { building_id: buildingId } : undefined)
+      .then(setReports).catch(() => {}).finally(() => setReportsLoading(false));
   };
 
-  useEffect(() => { fetchVehicles(); }, []);
+  useEffect(() => { fetchVehicles(); }, [buildingId, needsBuilding]);
 
   useEffect(() => {
     if (activeTab === 'reports') fetchReports();
-  }, [activeTab]);
+  }, [activeTab, buildingId, needsBuilding]);
 
   const handleAdd = async () => {
     if (!form.vehicle_number.trim()) return;
@@ -149,10 +172,16 @@ export default function Parking() {
 
   const myVehicles = vehicles.filter(v => v.user_id === user?.id);
 
-  if (loading) return <div><LoadingSkeleton /></div>;
+  if (loading && !needsBuilding) return <div><LoadingSkeleton /></div>;
 
   return (
     <div>
+      {isAdminRole && (
+        <BuildingSelect className="mb-4" buildings={buildings} loading={buildingsLoading} value={selectedBuilding} onChange={selectBuilding} />
+      )}
+      {needsBuilding ? (
+        <AdminBuildingPrompt />
+      ) : (<>
       <PageHeader
         title="Parking"
         subtitle="Manage vehicles and parking"
@@ -359,6 +388,7 @@ export default function Parking() {
         confirmLabel="Remove"
         onConfirm={handleDelete}
       />
+      </>)}
     </div>
   );
 }

@@ -16,7 +16,7 @@ export function ModuleTile({ moduleKey, label, icon, badgeCount, locked, onClick
       data-testid="module-tile"
       data-module={moduleKey}
       onClick={onClick}
-      className={`relative flex flex-col items-center gap-2 p-4 rounded-2xl bg-white shadow-sm border border-gray-100 hover:shadow-md transition-all active:scale-95 ${locked ? 'opacity-60' : ''}`}
+      className={`relative flex flex-col items-center gap-2 p-4 rounded-2xl bg-white shadow-sm border border-gray-100 hover:shadow-md transition-all active:scale-95 w-full ${locked ? 'opacity-60' : ''}`}
     >
       <div className="relative">
         <div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">

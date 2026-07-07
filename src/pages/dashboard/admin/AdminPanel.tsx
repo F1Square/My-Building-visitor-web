@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../../components/ui/PageHeader';
-import { Building2, Users, CreditCard, ListOrdered, Tag, MailOpen, Landmark } from 'lucide-react';
+import { Building2, Users, CreditCard, ListOrdered, Tag, MailOpen, Landmark, HelpCircle } from 'lucide-react';
 
 const SECTIONS = [
   { icon: Building2, label: 'Buildings', path: '/dashboard/admin/buildings', color: '#3B5FC0', bg: '#E8EEF9' },
@@ -9,6 +9,7 @@ const SECTIONS = [
   { icon: ListOrdered, label: 'Activity Logs', path: '/dashboard/admin/activity-logs', color: '#475569', bg: '#F1F5F9' },
   { icon: Tag, label: 'Promo Codes', path: '/dashboard/admin/promos', color: '#EF4444', bg: '#FDE8E8' },
   { icon: MailOpen, label: 'Inquiries', path: '/dashboard/admin/inquiries', color: '#0EA5E9', bg: '#E0F2FE' },
+  { icon: HelpCircle, label: 'Help & Support', path: '/dashboard/admin/support', color: '#0D9488', bg: '#E0F7F4' },
   { icon: Landmark, label: 'Bank Details', path: '/dashboard/admin/bank-details', color: '#7C3AED', bg: '#EDE9FE' },
 ];
 

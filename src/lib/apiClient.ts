@@ -3,6 +3,16 @@ const API_BASE: string = (_envBase && _envBase !== 'undefined')
   ? _envBase
   : 'https://my-building-backend.vercel.app/api';
 
+function withQuery(path: string, params?: Record<string, string | number | boolean | undefined | null>): string {
+  if (!params) return path;
+  const qs = new URLSearchParams();
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== undefined && v !== null && v !== '') qs.set(k, String(v));
+  });
+  const q = qs.toString();
+  return q ? `${path}?${q}` : path;
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem('mb_token');
 
@@ -35,7 +45,8 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export const api = {
-  get: <T>(path: string) => request<T>(path),
+  get: <T>(path: string, params?: Record<string, string | number | boolean | undefined | null>) =>
+    request<T>(withQuery(path, params)),
   post: <T>(path: string, body?: unknown) =>
     request<T>(path, {
       method: 'POST',

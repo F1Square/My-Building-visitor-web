@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { ALL_MODULES, MODULE_VISIBILITY, SUBSCRIPTION_GATED_MODULES, getGreeting, filterModules } from '../../lib/modules';
+import { getModulesForRole, SUBSCRIPTION_GATED_MODULES, filterModules } from '../../lib/modules';
 import { ModuleTile } from '../../components/ui/ModuleTile';
 import { SearchInput } from '../../components/ui/SearchInput';
 import { MobileAppPrompt, MobileOnlyButton } from '../../components/ui/MobileAppPrompt';
@@ -32,8 +32,7 @@ export default function Home() {
   }, [user?.building_id]);
 
   const role = user?.role ?? 'user';
-  const visibleKeys = MODULE_VISIBILITY[role] ?? [];
-  const visibleModules = ALL_MODULES.filter(m => visibleKeys.includes(m.key));
+  const visibleModules = getModulesForRole(role);
   const filtered = filterModules(visibleModules, query);
 
   const hasNewspaperAddon =
@@ -53,9 +52,6 @@ export default function Home() {
     }
     navigate(path);
   }, [hasActiveSubscription, hasNewspaperAddon, navigate, role]);
-
-  const greeting = getGreeting(new Date().getHours());
-  const firstName = user?.name?.split(' ')[0] ?? '';
 
   // Pending user — no building
   if (user && !user.building_id) {
@@ -79,7 +75,7 @@ export default function Home() {
   }
 
   return (
-    <div>
+    <div className="w-full max-w-full">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">{user?.building_name || (user?.role === 'admin' ? 'Admin Panel' : 'My Building')} 👋</h1>
@@ -110,7 +106,7 @@ export default function Home() {
       )}
 
       {/* Module grid */}
-      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+      <div className="w-full grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 justify-items-stretch">
         {filtered.map(m => {
           const isNewspaperLocked = m.key === 'newspaper' && role !== 'admin' && !hasNewspaperAddon;
           const locked = isNewspaperLocked || (SUBSCRIPTION_GATED_MODULES.includes(m.key) && !hasActiveSubscription && role !== 'admin');

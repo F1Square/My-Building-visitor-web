@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { BuildingSelect, AdminBuildingPrompt } from '../../components/admin/BuildingSelect';
+import { useAdminBuilding } from '../../hooks/useAdminBuilding';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { LoadingSkeleton } from '../../components/ui/LoadingSkeleton';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -19,6 +21,15 @@ function toDateStr(y: number, m: number, d: number) {
 
 export default function Visitors() {
   const { user } = useAuth();
+  const {
+    isAdmin,
+    buildings,
+    buildingsLoading,
+    selectedBuilding,
+    selectBuilding,
+    buildingId,
+    needsBuilding,
+  } = useAdminBuilding();
   const today = new Date();
   const [calYear, setCalYear] = useState(today.getFullYear());
   const [calMonth, setCalMonth] = useState(today.getMonth() + 1);
@@ -28,21 +39,30 @@ export default function Visitors() {
   const [listLoading, setListLoading] = useState(false);
   const [detail, setDetail] = useState<Visitor | null>(null);
 
+  const effectiveBuildingId = buildingId ?? user?.building_id;
+
   useEffect(() => {
-    api.get<{ dates: string[] }>(`/visitors/dates?month=${calMonth}&year=${calYear}`)
+    if (needsBuilding || !effectiveBuildingId) return;
+    api.get<{ dates: string[] }>('/visitors/dates', { month: calMonth, year: calYear, building_id: effectiveBuildingId })
       .then(d => setMarkedDates(new Set(d.dates)))
       .catch(() => {});
-  }, [calMonth, calYear]);
+  }, [calMonth, calYear, effectiveBuildingId, needsBuilding]);
 
   useEffect(() => {
+    if (needsBuilding || !effectiveBuildingId) {
+      setVisitors([]);
+      return;
+    }
     setListLoading(true);
-    api.get<Visitor[]>(`/visitors?date=${selectedDate}`)
+    api.get<Visitor[]>('/visitors', { date: selectedDate, building_id: effectiveBuildingId })
       .then(setVisitors).catch(() => setVisitors([]))
       .finally(() => setListLoading(false));
-  }, [selectedDate]);
+  }, [selectedDate, effectiveBuildingId, needsBuilding]);
 
   const shareQR = () => {
-    const url = `${window.location.origin}/entry/${user?.building_id}`;
+    const id = effectiveBuildingId;
+    if (!id) return;
+    const url = `${window.location.origin}/entry/${id}`;
     navigator.clipboard.writeText(url).then(() => alert('QR link copied!')).catch(() => window.open(url, '_blank'));
   };
 
@@ -56,6 +76,12 @@ export default function Visitors() {
 
   return (
     <div>
+      {isAdmin && (
+        <BuildingSelect className="mb-4" buildings={buildings} loading={buildingsLoading} value={selectedBuilding} onChange={selectBuilding} />
+      )}
+      {needsBuilding ? (
+        <AdminBuildingPrompt />
+      ) : (<>
       <PageHeader title="Visitors" action={
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={shareQR} className="gap-1">
@@ -154,6 +180,7 @@ export default function Visitors() {
           )}
         </DialogContent>
       </Dialog>
+      </>)}
     </div>
   );
 }

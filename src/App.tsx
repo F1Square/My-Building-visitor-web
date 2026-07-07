@@ -29,6 +29,7 @@ import Chat from "./pages/dashboard/Chat";
 import Complaints from "./pages/dashboard/Complaints";
 import Members from "./pages/dashboard/Members";
 import Expenses from "./pages/dashboard/Expenses";
+import ExpensesDetail from "./pages/dashboard/ExpensesDetail";
 import Helpline from "./pages/dashboard/Helpline";
 import Newspaper from "./pages/dashboard/Newspaper";
 import SocietyRules from "./pages/dashboard/SocietyRules";
@@ -37,6 +38,8 @@ import MyPayments from "./pages/dashboard/MyPayments";
 import PaymentReview from "./pages/dashboard/PaymentReview";
 import Profile from "./pages/dashboard/Profile";
 import Refer from "./pages/dashboard/Refer";
+import Support from "./pages/dashboard/Support";
+import SupportDetail from "./pages/dashboard/SupportDetail";
 import JoinRequests from "./pages/dashboard/JoinRequests";
 
 // Admin pages
@@ -47,6 +50,7 @@ import AdminSubscriptions from "./pages/dashboard/admin/AdminSubscriptions";
 import ActivityLogs from "./pages/dashboard/admin/ActivityLogs";
 import Promos from "./pages/dashboard/admin/Promos";
 import Inquiries from "./pages/dashboard/admin/Inquiries";
+import SupportTickets from "./pages/dashboard/admin/SupportTickets";
 import BankDetails from "./pages/dashboard/admin/BankDetails";
 
 const queryClient = new QueryClient();
@@ -82,11 +86,14 @@ const App = () => (
                 <Route path="/dashboard/complaints" element={<Complaints />} />
                 <Route path="/dashboard/members" element={<Members />} />
                 <Route path="/dashboard/expenses" element={<Expenses />} />
+                <Route path="/dashboard/expenses/:wing" element={<ExpensesDetail />} />
                 <Route path="/dashboard/helpline" element={<Helpline />} />
                 <Route path="/dashboard/newspaper" element={<Newspaper />} />
                 <Route path="/dashboard/society-rules" element={<SocietyRules />} />
                 <Route path="/dashboard/profile" element={<Profile />} />
                 <Route path="/dashboard/refer" element={<Refer />} />
+                <Route path="/dashboard/support" element={<Support />} />
+                <Route path="/dashboard/support/:id" element={<SupportDetail />} />
                 <Route path="/dashboard/join-requests" element={<JoinRequests />} />
 
                 {/* Not for admin */}
@@ -109,6 +116,7 @@ const App = () => (
                   <Route path="/dashboard/admin/activity-logs" element={<ActivityLogs />} />
                   <Route path="/dashboard/admin/promos" element={<Promos />} />
                   <Route path="/dashboard/admin/inquiries" element={<Inquiries />} />
+                  <Route path="/dashboard/admin/support" element={<SupportTickets />} />
                   <Route path="/dashboard/admin/bank-details" element={<BankDetails />} />
                 </Route>
               </Route>

@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { ALL_MODULES, MODULE_VISIBILITY } from '../../lib/modules';
+import { getModulesForRole } from '../../lib/modules';
 import { Building2, LogOut } from 'lucide-react';
 import { Button } from '../ui/button';
 import { ScrollArea } from '../ui/scroll-area';
@@ -11,8 +11,7 @@ export function Sidebar() {
   const navigate = useNavigate();
 
   const role = user?.role ?? 'user';
-  const visibleKeys = MODULE_VISIBILITY[role] ?? [];
-  const navModules = ALL_MODULES.filter(m => visibleKeys.includes(m.key));
+  const navModules = getModulesForRole(role);
 
   const handleLogout = () => { logout(); navigate('/login'); };
 

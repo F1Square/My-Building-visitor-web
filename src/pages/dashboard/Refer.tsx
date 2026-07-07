@@ -30,8 +30,10 @@ export default function Refer() {
   }, []);
 
   const copyLink = () => {
-    const link = `${window.location.origin}/register?ref=${code}`;
-    navigator.clipboard.writeText(link).then(() => toast({ title: 'Link copied!' }));
+    const link = code
+      ? `${window.location.origin}/register-society?ref=${encodeURIComponent(code)}`
+      : `${window.location.origin}/register-society`;
+    navigator.clipboard.writeText(link).then(() => toast({ title: 'Referral link copied!' }));
   };
 
   const isAdmin = user?.role === 'admin';

@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { BuildingSelect, AdminBuildingPrompt } from '../../components/admin/BuildingSelect';
+import { useAdminBuilding } from '../../hooks/useAdminBuilding';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { LoadingSkeleton } from '../../components/ui/LoadingSkeleton';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -21,6 +23,15 @@ interface HelplineEntry {
 export default function Helpline() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const {
+    isAdmin,
+    buildings,
+    buildingsLoading,
+    selectedBuilding,
+    selectBuilding,
+    buildingId,
+    needsBuilding,
+  } = useAdminBuilding();
   const [contacts, setContacts] = useState<HelplineEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -32,11 +43,17 @@ export default function Helpline() {
   const canManage = user?.role === 'pramukh' || user?.role === 'admin';
 
   const fetchContacts = () => {
+    if (needsBuilding) {
+      setContacts([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
-    api.get<HelplineEntry[]>('/helpline').then(setContacts).catch(() => {}).finally(() => setLoading(false));
+    api.get<HelplineEntry[]>('/helpline', buildingId ? { building_id: buildingId } : undefined)
+      .then(setContacts).catch(() => {}).finally(() => setLoading(false));
   };
 
-  useEffect(() => { fetchContacts(); }, []);
+  useEffect(() => { fetchContacts(); }, [buildingId, needsBuilding]);
 
   const handleAdd = async () => {
     if (!form.profession.trim() || !form.name.trim() || !form.phone.trim()) {
@@ -45,7 +62,7 @@ export default function Helpline() {
     }
     setSubmitting(true);
     try {
-      await api.post('/helpline', form);
+      await api.post('/helpline', { ...form, ...(buildingId ? { building_id: buildingId } : {}) });
       toast({ title: 'Contact added' });
       setShowForm(false);
       setForm({ profession: '', name: '', phone: '' });
@@ -79,10 +96,16 @@ export default function Helpline() {
     } finally { setDeleteId(null); }
   };
 
-  if (loading) return <div><LoadingSkeleton /></div>;
+  if (loading && !needsBuilding) return <div><LoadingSkeleton /></div>;
 
   return (
     <div>
+      {isAdmin && (
+        <BuildingSelect className="mb-4" buildings={buildings} loading={buildingsLoading} value={selectedBuilding} onChange={selectBuilding} />
+      )}
+      {needsBuilding ? (
+        <AdminBuildingPrompt />
+      ) : (<>
       <PageHeader title="Helpline" subtitle="Emergency contacts"
         action={canManage ? <Button size="sm" onClick={() => {
           setForm({ profession: '', name: '', phone: '' });
@@ -146,6 +169,7 @@ export default function Helpline() {
         confirmLabel="Delete"
         onConfirm={handleDelete}
       />
+      </>)}
     </div>
   );
 }

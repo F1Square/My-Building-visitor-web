@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Building2, CheckCircle2, ExternalLink, Loader2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,7 @@ const STEPS = ["Your Details", "Society Info", "Payment Setup"];
 export default function RegisterSociety() {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const logoRef = useRef<HTMLInputElement>(null);
 
   const [step, setStep] = useState(0);
@@ -38,6 +39,7 @@ export default function RegisterSociety() {
   // Step 1 — personal details
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [referralCode, setReferralCode] = useState("");
 
   // Step 2 — society info
   const [societyName, setSocietyName] = useState("");
@@ -57,6 +59,11 @@ export default function RegisterSociety() {
   const [waterBillSeparate, setWaterBillSeparate] = useState(false);
   const [lateFee, setLateFee] = useState("");
 
+  useEffect(() => {
+    const ref = searchParams.get("ref");
+    if (ref) setReferralCode(ref.toUpperCase().replace(/\s/g, ""));
+  }, [searchParams]);
+
   const handleLogo = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -73,6 +80,11 @@ export default function RegisterSociety() {
     if (step === 0) {
       if (!name.trim()) { toast({ title: "Name required", variant: "destructive" }); return false; }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { toast({ title: "Valid email required", variant: "destructive" }); return false; }
+      const ref = referralCode.trim().toUpperCase().replace(/\s/g, "");
+      if (ref && !/^[A-Z0-9]{4,12}$/.test(ref)) {
+        toast({ title: "Invalid referral code", description: "Use 4–12 letters or digits.", variant: "destructive" });
+        return false;
+      }
     }
     if (step === 1) {
       if (!societyName.trim()) { toast({ title: "Society name required", variant: "destructive" }); return false; }
@@ -114,6 +126,7 @@ export default function RegisterSociety() {
           water_bill_separate: waterBillSeparate,
           late_fee: lateFee || null,
           society_logo: logoBase64 || null,
+          referral_code: referralCode.trim().toUpperCase().replace(/\s/g, "") || undefined,
         }),
       });
       const data = await res.json();
@@ -193,6 +206,23 @@ export default function RegisterSociety() {
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address <span className="text-red-500">*</span></Label>
                 <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} required />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="referral">Referral Code</Label>
+                  <span className="text-xs text-gray-400 font-medium">Optional</span>
+                </div>
+                <Input
+                  id="referral"
+                  placeholder="Friend's referral code"
+                  value={referralCode}
+                  onChange={e => setReferralCode(e.target.value.toUpperCase().replace(/\s/g, ""))}
+                  maxLength={12}
+                  autoCapitalize="characters"
+                />
+                <p className="text-xs text-gray-500">
+                  Enter a referral code when registering your society so your friend can earn rewards.
+                </p>
               </div>
             </div>
           )}

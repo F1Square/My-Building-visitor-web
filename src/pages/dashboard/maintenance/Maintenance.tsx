@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { PageHeader } from '../../../components/ui/PageHeader';
@@ -8,6 +8,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../../compo
 import { Input } from '../../../components/ui/input';
 import { Label } from '../../../components/ui/label';
 import { useToast } from '../../../components/ui/use-toast';
+import { BuildingSelect, AdminBuildingPrompt } from '../../../components/admin/BuildingSelect';
+import { useAdminBuilding } from '../../../hooks/useAdminBuilding';
+import type { BuildingOption } from '../../../hooks/useBuildings';
 import { Wrench, Droplets, Receipt, Plus, Wallet } from 'lucide-react';
 import api from '../../../lib/apiClient';
 
@@ -31,7 +34,19 @@ export default function Maintenance() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
+  const {
+    isAdmin,
+    buildings,
+    buildingsLoading,
+    selectedBuilding,
+    selectBuilding,
+    buildingId,
+    buildingName,
+    needsBuilding,
+  } = useAdminBuilding();
+
+  const [loading, setLoading] = useState(!isAdmin);
+  const [myBuilding, setMyBuilding] = useState<BuildingOption | null>(null);
   const [counts, setCounts] = useState<Record<string, number>>({ maintenance: 0, water_meter: 0, special: 0 });
   const [showCreateBill, setShowCreateBill] = useState(false);
   const [billForm, setBillForm] = useState({
@@ -41,15 +56,18 @@ export default function Maintenance() {
   const [creating, setCreating] = useState(false);
 
   const isPramukh = user?.role === 'pramukh';
-  const isAdmin = user?.role === 'admin';
+  const isManager = isPramukh || isAdmin;
 
-  useEffect(() => {
-    // For user/pramukh: get own pending counts
-    const endpoint = isPramukh || isAdmin
-      ? '/maintenance/payments'
-      : '/maintenance/payments?mine=true';
+  const fetchCounts = useCallback(() => {
+    if (needsBuilding) return;
 
-    api.get<PaymentRecord[]>(endpoint).then(data => {
+    const params: Record<string, string | boolean> = isManager && !isAdmin
+      ? {}
+      : { mine: true };
+    if (buildingId) params.building_id = buildingId;
+
+    setLoading(true);
+    api.get<PaymentRecord[]>('/maintenance/payments', params).then(data => {
       const c = { maintenance: 0, water_meter: 0, special: 0 };
       for (const p of data) {
         if (p.status === 'pending') {
@@ -59,11 +77,41 @@ export default function Maintenance() {
       }
       setCounts(c);
     }).catch(() => {}).finally(() => setLoading(false));
-  }, [isPramukh, isAdmin]);
+  }, [needsBuilding, isManager, isAdmin, buildingId]);
+
+  useEffect(() => {
+    if (!isAdmin) {
+      api.get<BuildingOption>('/buildings/my').then(setMyBuilding).catch(() => {});
+    }
+  }, [isAdmin]);
+
+  useEffect(() => { fetchCounts(); }, [fetchCounts]);
+
+  const activeBuilding = isAdmin ? selectedBuilding : myBuilding;
+
+  const visibleCategories = CATEGORIES.filter(cat => {
+    if (cat.key === 'water_meter') {
+      if (!activeBuilding) return false;
+      return activeBuilding.water_reading_enabled === true;
+    }
+    return true;
+  });
+
+  const categoryUrl = (key: string) => {
+    const base = `/dashboard/maintenance/${key}`;
+    if (isAdmin && selectedBuilding) {
+      return `${base}?building_id=${selectedBuilding.id}&building_name=${encodeURIComponent(selectedBuilding.name)}`;
+    }
+    return base;
+  };
 
   const handleCreateBill = async () => {
     if (!billForm.due_date) {
       toast({ title: 'Error', description: 'Due date is required', variant: 'destructive' });
+      return;
+    }
+    if (isAdmin && !buildingId) {
+      toast({ title: 'Error', description: 'Select a society first', variant: 'destructive' });
       return;
     }
     setCreating(true);
@@ -73,6 +121,7 @@ export default function Maintenance() {
         due_date: billForm.due_date,
         description: billForm.description || undefined,
       };
+      if (buildingId) payload.building_id = buildingId;
       if (billForm.category === 'maintenance') {
         payload.amount = parseFloat(billForm.amount);
         payload.month = parseInt(billForm.month);
@@ -85,91 +134,91 @@ export default function Maintenance() {
       toast({ title: 'Bill created', description: 'Members have been notified.' });
       setShowCreateBill(false);
       setBillForm({ category: 'maintenance', amount: '', month: String(new Date().getMonth() + 1), year: String(new Date().getFullYear()), due_date: '', description: '', penalty_amount: '' });
-      // Refresh counts
-      setLoading(true);
-      api.get<PaymentRecord[]>('/maintenance/payments').then(data => {
-        const c = { maintenance: 0, water_meter: 0, special: 0 };
-        for (const p of data) {
-          if (p.status === 'pending') {
-            const cat = (p.category || p.maintenance_bills?.category || 'maintenance') as keyof typeof c;
-            if (cat in c) c[cat]++;
-          }
-        }
-        setCounts(c);
-      }).catch(() => {}).finally(() => setLoading(false));
+      fetchCounts();
     } catch (e: unknown) {
       toast({ title: 'Error', description: (e as Error).message, variant: 'destructive' });
     } finally { setCreating(false); }
   };
 
-  if (loading) return <div className="p-6"><LoadingSkeleton rows={3} /></div>;
-
   return (
     <div>
       <PageHeader
         title="Maintenance"
-        subtitle={isPramukh || isAdmin ? 'Manage billing categories' : 'Select a billing category'}
+        subtitle={isAdmin && selectedBuilding ? selectedBuilding.name : isManager ? 'Manage billing categories' : 'Select a billing category'}
         action={
-          isPramukh || isAdmin
-            ? <Button size="sm" onClick={() => setShowCreateBill(true)} className="gap-1"><Plus className="w-4 h-4" />Create Bill</Button>
+          isManager
+            ? <Button size="sm" onClick={() => setShowCreateBill(true)} disabled={needsBuilding} className="gap-1"><Plus className="w-4 h-4" />Create Bill</Button>
             : <Button size="sm" variant="outline" onClick={() => navigate('/dashboard/my-payments')} className="gap-1">
                 <Wallet className="w-4 h-4" />My Payments
               </Button>
         }
       />
 
-      <div className="space-y-4">
-        {CATEGORIES.map(cat => {
-          const Icon = cat.icon;
-          const pending = counts[cat.key];
-          return (
-            <button
-              key={cat.key}
-              onClick={() => navigate(`/dashboard/maintenance/${cat.key}`)}
-              className="w-full flex items-center gap-4 p-5 bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all text-left active:scale-[0.99]"
-            >
-              <div className="w-14 h-14 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: cat.bg }}>
-                <Icon className="w-7 h-7" style={{ color: cat.color }} />
-              </div>
-              <div className="flex-1">
-                <p className="font-bold text-gray-900">{cat.label}</p>
-                <p className="text-sm text-gray-500">{cat.subtitle}</p>
-              </div>
-              {pending > 0 && (
-                <span className="bg-red-500 text-white text-xs font-bold rounded-full px-2.5 py-1 shrink-0">
-                  {pending} pending
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
+      {isAdmin && (
+        <BuildingSelect
+          className="mb-4"
+          buildings={buildings}
+          loading={buildingsLoading}
+          value={selectedBuilding}
+          onChange={selectBuilding}
+        />
+      )}
 
-      {/* Create Bill Dialog — pramukh/admin only */}
+      {needsBuilding ? (
+        <AdminBuildingPrompt />
+      ) : loading ? (
+        <div className="p-2"><LoadingSkeleton rows={3} /></div>
+      ) : (
+        <div className="space-y-4">
+          {visibleCategories.map(cat => {
+            const Icon = cat.icon;
+            const pending = !isAdmin ? counts[cat.key] : 0;
+            return (
+              <button
+                key={cat.key}
+                onClick={() => navigate(categoryUrl(cat.key))}
+                className="w-full flex items-center gap-4 p-5 bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all text-left active:scale-[0.99]"
+              >
+                <div className="w-14 h-14 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: cat.bg }}>
+                  <Icon className="w-7 h-7" style={{ color: cat.color }} />
+                </div>
+                <div className="flex-1">
+                  <p className="font-bold text-gray-900">{cat.label}</p>
+                  <p className="text-sm text-gray-500">{cat.subtitle}</p>
+                </div>
+                {pending > 0 && (
+                  <span className="bg-red-500 text-white text-xs font-bold rounded-full px-2.5 py-1 shrink-0">
+                    {pending} pending
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       <Dialog open={showCreateBill} onOpenChange={setShowCreateBill}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Create New Bill</DialogTitle></DialogHeader>
+          {isAdmin && buildingName && (
+            <p className="text-sm text-gray-500 -mt-2">Society: <span className="font-medium text-gray-800">{buildingName}</span></p>
+          )}
           <div className="space-y-4 mt-2">
-            {/* Category */}
             <div className="space-y-2">
               <Label>Category</Label>
               <div className="grid grid-cols-3 gap-2">
-                {CATEGORIES.map(c => (
+                {visibleCategories.map(c => (
                   <button key={c.key} onClick={() => setBillForm(f => ({ ...f, category: c.key }))}
                     className={`py-2 px-3 rounded-xl border text-xs font-semibold transition-colors ${billForm.category === c.key ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200 text-gray-600'}`}>
-                    {c.label}
+                    {c.label.split(' ')[0]}
                   </button>
                 ))}
               </div>
             </div>
-
-            {/* Amount */}
             <div className="space-y-2">
               <Label>Amount (₹) *</Label>
               <Input type="number" placeholder="e.g. 2000" value={billForm.amount} onChange={e => setBillForm(f => ({ ...f, amount: e.target.value }))} />
             </div>
-
-            {/* Month/Year — maintenance only */}
             {billForm.category === 'maintenance' && (
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
@@ -184,28 +233,21 @@ export default function Maintenance() {
                 </div>
               </div>
             )}
-
-            {/* Due date */}
             <div className="space-y-2">
               <Label>Due Date *</Label>
               <Input type="date" value={billForm.due_date} onChange={e => setBillForm(f => ({ ...f, due_date: e.target.value }))} />
             </div>
-
-            {/* Description */}
             <div className="space-y-2">
               <Label>Description {billForm.category === 'special' ? '*' : '(optional)'}</Label>
               <Input placeholder="e.g. Monthly maintenance charges" value={billForm.description} onChange={e => setBillForm(f => ({ ...f, description: e.target.value }))} />
             </div>
-
-            {/* Penalty — maintenance only */}
             {billForm.category === 'maintenance' && (
               <div className="space-y-2">
                 <Label>Late Penalty Amount (₹) — optional</Label>
                 <Input type="number" placeholder="e.g. 100" value={billForm.penalty_amount} onChange={e => setBillForm(f => ({ ...f, penalty_amount: e.target.value }))} />
               </div>
             )}
-
-            <Button className="w-full" disabled={creating} onClick={handleCreateBill}>
+            <Button className="w-full" disabled={creating || needsBuilding} onClick={handleCreateBill}>
               {creating ? 'Creating...' : 'Create Bill & Notify Members'}
             </Button>
           </div>

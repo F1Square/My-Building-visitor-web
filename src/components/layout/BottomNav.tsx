@@ -1,5 +1,5 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Bell, User, Grid3X3 } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { Home, Bell, User, Grid3X3, HelpCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 interface BottomNavProps {
@@ -11,8 +11,11 @@ export function BottomNav({ onBellClick, unreadCount = 0 }: BottomNavProps) {
   const location = useLocation();
   const { user } = useAuth();
 
+  const showHelp = user?.role === 'user' || user?.role === 'pramukh';
+
   const items = [
     { icon: Home, label: 'Home', path: '/dashboard' },
+    ...(showHelp ? [{ icon: HelpCircle, label: 'Help', path: '/dashboard/support' as string | null, onClick: undefined, badge: 0 }] : []),
     { icon: Bell, label: 'Alerts', path: null, onClick: onBellClick, badge: unreadCount },
     { icon: User, label: 'Profile', path: '/dashboard/profile' },
     { icon: Grid3X3, label: 'More', path: user?.role === 'admin' ? '/dashboard/admin' : '/dashboard/society-rules' },

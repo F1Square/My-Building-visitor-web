@@ -20,7 +20,7 @@ export const MODULE_VISIBILITY: Record<string, string[]> = {
   ],
   admin: [
     'expenses','maintenance','announcements','visitors','bank-details',
-    'admin','users','inquiries','complaints','helpline',
+    'admin','users','inquiries','support-admin','complaints','helpline',
     'subscriptions-admin','promos','activity-logs','refer','newspaper','society-rules',
   ],
   watchman: ['visitors','helpline'],
@@ -52,10 +52,22 @@ export const ALL_MODULES: ModuleConfig[] = [
   { key: 'admin',             label: 'Admin Panel',      icon: 'ShieldCheck',    path: '/dashboard/admin',                color: '#3B5FC0', bg: '#E8EEF9' },
   { key: 'users',             label: 'Users',            icon: 'Users2',         path: '/dashboard/admin/users',          color: '#0D9488', bg: '#E0F7F4' },
   { key: 'inquiries',         label: 'Inquiries',        icon: 'MailOpen',       path: '/dashboard/admin/inquiries',      color: '#0EA5E9', bg: '#E0F2FE' },
+  { key: 'support-admin',     label: 'Help & Support',   icon: 'HelpCircle',     path: '/dashboard/admin/support',        color: '#0D9488', bg: '#E0F7F4' },
   { key: 'subscriptions-admin', label: 'Subscriptions', icon: 'CreditCard',     path: '/dashboard/admin/subscriptions',  color: '#CA8A04', bg: '#FEF9C3' },
   { key: 'promos',            label: 'Promo Codes',      icon: 'Tag',            path: '/dashboard/admin/promos',         color: '#EF4444', bg: '#FDE8E8' },
   { key: 'activity-logs',     label: 'Activity Logs',    icon: 'ListOrdered',    path: '/dashboard/admin/activity-logs',  color: '#475569', bg: '#F1F5F9' },
 ];
+
+export function sortModulesAlphabetically(modules: ModuleConfig[]): ModuleConfig[] {
+  return [...modules].sort((a, b) =>
+    a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }),
+  );
+}
+
+export function getModulesForRole(role: string): ModuleConfig[] {
+  const visibleKeys = MODULE_VISIBILITY[role] ?? [];
+  return sortModulesAlphabetically(ALL_MODULES.filter(m => visibleKeys.includes(m.key)));
+}
 
 export function getGreeting(hour: number): string {
   if (hour >= 5 && hour <= 11) return 'Good morning';
@@ -64,7 +76,7 @@ export function getGreeting(hour: number): string {
 }
 
 export function filterModules(modules: ModuleConfig[], query: string): ModuleConfig[] {
-  if (!query.trim()) return modules;
-  const q = query.toLowerCase();
-  return modules.filter(m => m.label.toLowerCase().includes(q));
+  const q = query.trim().toLowerCase();
+  const pool = !q ? modules : modules.filter(m => m.label.toLowerCase().includes(q));
+  return sortModulesAlphabetically(pool);
 }
