@@ -15,9 +15,36 @@ interface BuildingInfo {
   id: string;
   name: string;
   address?: string;
+  has_wings?: boolean;
+  wing_list?: string[];
 }
 
 const PHONE_RE = /^[6-9]\d{9}$/;
+
+function compressImageFile(file: File, maxWidth = 960, quality = 0.75): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d')?.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => reject(new Error('Failed to load image'));
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsDataURL(file);
+  });
+}
 
 const VisitorEntry = () => {
   const { building_id } = useParams<{ building_id: string }>();
@@ -29,6 +56,7 @@ const VisitorEntry = () => {
 
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
+  const [wing, setWing] = useState("");
   const [flatNo, setFlatNo] = useState("");
   const [purpose, setPurpose] = useState("");
   const [photoBase64, setPhotoBase64] = useState<string | null>(null);
@@ -52,16 +80,16 @@ const VisitorEntry = () => {
       .finally(() => setLoadingBuilding(false));
   }, [building_id]);
 
-  const handlePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const result = ev.target?.result as string;
+    try {
+      const result = await compressImageFile(file);
       setPhotoBase64(result);
       setPhotoPreview(result);
-    };
-    reader.readAsDataURL(file);
+    } catch {
+      toast({ title: "Photo error", description: "Could not process the image. Try another photo.", variant: "destructive" });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -74,19 +102,26 @@ const VisitorEntry = () => {
       toast({ title: "Photo required", description: "Please take or upload a photo.", variant: "destructive" });
       return;
     }
+    if (building?.has_wings && building.wing_list?.length && !wing) {
+      toast({ title: "Wing required", description: "Please select a wing.", variant: "destructive" });
+      return;
+    }
 
     setSubmitting(true);
     try {
+      const payload: Record<string, string> = {
+        name: name.trim(),
+        mobile: mobile.trim(),
+        flat_no: flatNo.trim(),
+        purpose: purpose.trim(),
+        photo_url: photoBase64,
+      };
+      if (building?.has_wings && wing) payload.wing = wing;
+
       const res = await fetch(`${BACKEND_BASE}/entry/building/${building_id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name.trim(),
-          mobile: mobile.trim(),
-          flat_no: flatNo.trim(),
-          purpose: purpose.trim(),
-          photo_url: photoBase64,
-        }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok || data.error) {
@@ -129,12 +164,14 @@ const VisitorEntry = () => {
           <h2 className="text-2xl font-extrabold text-green-600">Entry Registered!</h2>
           <p className="text-gray-500 mt-3 leading-relaxed">
             Your visit to <strong>{building.name}</strong> has been recorded.<br />
-            The residents have been notified.
+            The flat resident has been notified.
           </p>
         </div>
       </div>
     );
   }
+
+  const hasWings = !!building.has_wings && (building.wing_list?.length ?? 0) > 0;
 
   return (
     <div className="min-h-screen bg-[#f0f4f8] py-8 px-4">
@@ -168,9 +205,27 @@ const VisitorEntry = () => {
           />
         </div>
 
+        {hasWings && (
+          <div className="space-y-1">
+            <Label htmlFor="wing">Select Wing <span className="text-red-500">*</span></Label>
+            <select
+              id="wing"
+              value={wing}
+              onChange={(e) => setWing(e.target.value)}
+              required
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <option value="">Choose wing</option>
+              {building.wing_list!.map((w) => (
+                <option key={w} value={w}>{w}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <div className="space-y-1">
-          <Label htmlFor="flat_no">Visiting Flat No <span className="text-red-500">*</span></Label>
-          <Input id="flat_no" placeholder="e.g. A-101" value={flatNo} onChange={(e) => setFlatNo(e.target.value)} required autoComplete="off" />
+          <Label htmlFor="flat_no">{hasWings ? "Flat Number" : "Visiting Flat No"} <span className="text-red-500">*</span></Label>
+          <Input id="flat_no" placeholder="e.g. 101" value={flatNo} onChange={(e) => setFlatNo(e.target.value)} required autoComplete="off" />
         </div>
 
         <div className="space-y-1">
