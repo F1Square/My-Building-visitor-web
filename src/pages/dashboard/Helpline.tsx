@@ -20,6 +20,28 @@ interface HelplineEntry {
   phone: string;
 }
 
+const PHONE_RE = /^[6-9]\d{9}$/;
+
+const PROFESSION_OPTIONS = [
+  'Plumber', 'Electrician', 'Carpenter', 'Painter', 'Security Guard',
+  'Lift Technician', 'Pest Control', 'Housekeeping', 'Doctor', 'Ambulance',
+  'Fire Station', 'Police', 'Gas Agency', 'Water Supply', 'Other',
+];
+
+type FormState = { profession: string; name: string; phone: string };
+type FormErrors = { profession?: string; name?: string; phone?: string; general?: string };
+
+function validateForm(form: FormState): FormErrors {
+  const errors: FormErrors = {};
+  if (!form.profession.trim()) errors.profession = 'Please select a profession';
+  if (!form.name.trim()) errors.name = 'Name is required';
+  if (!form.phone.trim()) errors.phone = 'Phone number is required';
+  else if (!PHONE_RE.test(form.phone.trim())) {
+    errors.phone = 'Enter a valid 10-digit Indian mobile number starting with 6–9';
+  }
+  return errors;
+}
+
 export default function Helpline() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -37,7 +59,8 @@ export default function Helpline() {
   const [showForm, setShowForm] = useState(false);
   const [editContact, setEditContact] = useState<HelplineEntry | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [form, setForm] = useState({ profession: '', name: '', phone: '' });
+  const [form, setForm] = useState<FormState>({ profession: '', name: '', phone: '' });
+  const [errors, setErrors] = useState<FormErrors>({});
   const [submitting, setSubmitting] = useState(false);
 
   const canManage = user?.role === 'pramukh' || user?.role === 'admin';
@@ -55,33 +78,56 @@ export default function Helpline() {
 
   useEffect(() => { fetchContacts(); }, [buildingId, needsBuilding]);
 
+  const resetForm = () => {
+    setForm({ profession: '', name: '', phone: '' });
+    setErrors({});
+  };
+
   const handleAdd = async () => {
-    if (!form.profession.trim() || !form.name.trim() || !form.phone.trim()) {
-      toast({ title: 'Error', description: 'Profession, name and phone are required', variant: 'destructive' });
-      return;
-    }
+    const nextErrors = validateForm(form);
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
+
     setSubmitting(true);
+    setErrors({});
     try {
-      await api.post('/helpline', { ...form, ...(buildingId ? { building_id: buildingId } : {}) });
+      await api.post('/helpline', {
+        profession: form.profession.trim(),
+        name: form.name.trim(),
+        phone: form.phone.trim(),
+        ...(buildingId ? { building_id: buildingId } : {}),
+      });
       toast({ title: 'Contact added' });
       setShowForm(false);
-      setForm({ profession: '', name: '', phone: '' });
+      resetForm();
       fetchContacts();
     } catch (e: unknown) {
-      toast({ title: 'Error', description: (e as Error).message, variant: 'destructive' });
+      const message = e instanceof Error ? e.message : 'Failed to add contact';
+      setErrors({ general: message });
     } finally { setSubmitting(false); }
   };
 
   const handleEdit = async () => {
-    if (!editContact || !form.profession.trim() || !form.name.trim() || !form.phone.trim()) return;
+    if (!editContact) return;
+    const nextErrors = validateForm(form);
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
+
     setSubmitting(true);
+    setErrors({});
     try {
-      await api.patch(`/helpline/${editContact.id}`, form);
+      await api.patch(`/helpline/${editContact.id}`, {
+        profession: form.profession.trim(),
+        name: form.name.trim(),
+        phone: form.phone.trim(),
+      });
       toast({ title: 'Contact updated' });
       setEditContact(null);
+      resetForm();
       fetchContacts();
     } catch (e: unknown) {
-      toast({ title: 'Error', description: (e as Error).message, variant: 'destructive' });
+      const message = e instanceof Error ? e.message : 'Failed to update contact';
+      setErrors({ general: message });
     } finally { setSubmitting(false); }
   };
 
@@ -108,11 +154,11 @@ export default function Helpline() {
       ) : (<>
       <PageHeader title="Helpline" subtitle="Emergency contacts"
         action={canManage ? <Button size="sm" onClick={() => {
-          setForm({ profession: '', name: '', phone: '' });
+          resetForm();
           setShowForm(true);
         }} className="gap-1"><Plus className="w-4 h-4" />New</Button> : undefined}
       />
-      
+
       {contacts.length === 0 ? (
         <EmptyState icon={<Phone className="w-12 h-12 text-gray-300" />} title="No contacts added" description="No emergency contacts have been added yet." />
       ) : (
@@ -131,6 +177,7 @@ export default function Helpline() {
                 <div className="flex items-center gap-1 shrink-0">
                   <button onClick={() => {
                     setForm({ profession: c.profession, name: c.name, phone: c.phone });
+                    setErrors({});
                     setEditContact(c);
                   }} className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
                     <Edit2 className="w-4 h-4" />
@@ -146,14 +193,55 @@ export default function Helpline() {
       )}
 
       <Dialog open={showForm || !!editContact} onOpenChange={o => {
-        if (!o) { setShowForm(false); setEditContact(null); }
+        if (!o) { setShowForm(false); setEditContact(null); resetForm(); }
       }}>
-        <DialogContent>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editContact ? 'Edit Contact' : 'New Contact'}</DialogTitle></DialogHeader>
           <div className="space-y-3 mt-2">
-            <Input placeholder="Profession * (e.g. Plumber, Electrician)" value={form.profession} onChange={e => setForm(f => ({ ...f, profession: e.target.value }))} />
-            <Input placeholder="Name *" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
-            <Input placeholder="Phone * (10-digit Indian mobile)" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
+            {errors.general && (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{errors.general}</p>
+            )}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">Profession *</label>
+              <select
+                value={form.profession}
+                onChange={e => {
+                  setForm(f => ({ ...f, profession: e.target.value }));
+                  setErrors(prev => ({ ...prev, profession: undefined, general: undefined }));
+                }}
+                className={`w-full h-10 rounded-md border bg-background px-3 text-sm ${errors.profession ? 'border-red-400' : 'border-input'}`}
+              >
+                <option value="">Select profession</option>
+                {PROFESSION_OPTIONS.map(p => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
+              {errors.profession && <p className="text-xs text-red-600 mt-1">{errors.profession}</p>}
+            </div>
+            <div>
+              <Input
+                placeholder="Contact name *"
+                value={form.name}
+                onChange={e => {
+                  setForm(f => ({ ...f, name: e.target.value }));
+                  setErrors(prev => ({ ...prev, name: undefined, general: undefined }));
+                }}
+                className={errors.name ? 'border-red-400' : undefined}
+              />
+              {errors.name && <p className="text-xs text-red-600 mt-1">{errors.name}</p>}
+            </div>
+            <div>
+              <Input
+                placeholder="Phone * (10-digit Indian mobile)"
+                value={form.phone}
+                onChange={e => {
+                  setForm(f => ({ ...f, phone: e.target.value }));
+                  setErrors(prev => ({ ...prev, phone: undefined, general: undefined }));
+                }}
+                className={errors.phone ? 'border-red-400' : undefined}
+              />
+              {errors.phone && <p className="text-xs text-red-600 mt-1">{errors.phone}</p>}
+            </div>
             <Button className="w-full py-6 text-base shadow-lg" disabled={submitting} onClick={editContact ? handleEdit : handleAdd}>
               {submitting ? 'Saving...' : editContact ? 'Save Changes' : 'Add Contact'}
             </Button>
