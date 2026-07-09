@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { PlayStoreButton } from "@/components/ui/MobileAppPrompt";
 import { PLAN_ENGAGEMENT, PLAN_DISPLAY_FEATURES, formatPlanHeading } from "@/lib/appLinks";
+import { ScrollReveal, StaggerItem, StaggerReveal } from "@/components/landing/scroll/ScrollReveal";
 import api from "@/lib/apiClient";
 import type { SubscriptionPlan } from "@/types";
 
@@ -48,7 +49,7 @@ const PricingSection = () => {
   }, []);
 
   const displayPlans = useMemo(() => {
-    const source = plans.length > 0 ? plans : FALLBACK_PLANS.map((p, i) => ({
+    const source: SubscriptionPlan[] = plans.length > 0 ? plans : FALLBACK_PLANS.map((p, i) => ({
       id: p.slug,
       slug: p.slug,
       title: p.title,
@@ -78,7 +79,7 @@ const PricingSection = () => {
   return (
     <section id="pricing" className="py-24 px-4 bg-muted/30">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center max-w-2xl mx-auto mb-16">
+        <ScrollReveal className="text-center max-w-2xl mx-auto mb-16">
           <p className="text-sm font-semibold text-primary uppercase tracking-wider mb-3">Pricing</p>
           <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4">
             Plans that grow with your society
@@ -86,15 +87,15 @@ const PricingSection = () => {
           <p className="text-muted-foreground text-lg leading-relaxed">
             Register on the web in minutes. Subscribe and pay inside the MyBuilding Android app — simple, secure, and built for Indian societies.
           </p>
-        </div>
+        </ScrollReveal>
 
-        <div className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto items-stretch">
+        <StaggerReveal className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto items-stretch">
           {displayPlans.map((plan) => {
             const Icon = plan.Icon;
             return (
+              <StaggerItem key={plan.slug}>
               <div
-                key={plan.slug}
-                className={`relative rounded-2xl border p-7 lg:p-8 bg-card flex flex-col transition-shadow hover:shadow-md ${
+                className={`relative rounded-2xl border p-7 lg:p-8 bg-card flex flex-col transition-shadow hover:shadow-md h-full ${
                   plan.best
                     ? "border-green-500/80 shadow-lg shadow-green-500/10 ring-1 ring-green-500/20"
                     : plan.popular
@@ -156,11 +157,12 @@ const PricingSection = () => {
                   </Button>
                 </Link>
               </div>
+              </StaggerItem>
             );
           })}
-        </div>
+        </StaggerReveal>
 
-        <div className="max-w-2xl mx-auto mt-14 text-center">
+        <ScrollReveal className="max-w-2xl mx-auto mt-14 text-center">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-blue-50 mb-4">
             <Smartphone className="w-6 h-6 text-blue-600" />
           </div>
@@ -170,7 +172,7 @@ const PricingSection = () => {
             iOS is on the way — Android users get the full experience today.
           </p>
           <PlayStoreButton label="Download on Google Play" />
-        </div>
+        </ScrollReveal>
       </div>
     </section>
   );

@@ -4,6 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Mail, Phone, MapPin } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { ScrollReveal } from "@/components/landing/scroll/ScrollReveal";
 
 const API_BASE = import.meta.env.VITE_API_BASE as string;
 
@@ -41,14 +42,14 @@ const ContactSection = () => {
   return (
     <section id="contact" className="py-24 px-4 bg-muted/30">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center max-w-2xl mx-auto mb-16">
+        <ScrollReveal className="text-center max-w-2xl mx-auto mb-16">
           <p className="text-sm font-semibold text-primary uppercase tracking-wider mb-3">Contact</p>
           <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4">Get in touch</h2>
           <p className="text-muted-foreground text-lg">Have questions? We'd love to hear from you.</p>
-        </div>
+        </ScrollReveal>
 
         <div className="grid md:grid-cols-2 gap-12 max-w-5xl mx-auto">
-          <div className="space-y-8">
+          <ScrollReveal direction="left" className="space-y-8">
             {[
               { icon: Mail,   label: "Email",  value: "matechnology02@gmail.com" },
               { icon: Phone,  label: "Phone",  value: "+91 88666 43153" },
@@ -64,8 +65,9 @@ const ContactSection = () => {
                 </div>
               </div>
             ))}
-          </div>
+          </ScrollReveal>
 
+          <ScrollReveal direction="right" delay={0.1}>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <Input placeholder="Your name" value={form.name} onChange={set("name")} required />
@@ -77,6 +79,7 @@ const ContactSection = () => {
               {loading ? "Sending..." : "Send Message"}
             </Button>
           </form>
+          </ScrollReveal>
         </div>
       </div>
     </section>

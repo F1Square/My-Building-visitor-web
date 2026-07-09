@@ -11,9 +11,10 @@ const Footer = () => (
           </div>
           <span className="font-bold font-['Plus_Jakarta_Sans']">MyBuilding</span>
         </Link>
-        <div className="flex gap-6 text-sm text-muted-foreground">
+        <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
           <a href="#features" className="hover:text-foreground transition-colors">Features</a>
           <a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a>
+          <a href="#faq" className="hover:text-foreground transition-colors">FAQ</a>
           <a href="#contact" className="hover:text-foreground transition-colors">Contact</a>
           <Link to="/login" className="hover:text-foreground transition-colors">Login</Link>
         </div>
