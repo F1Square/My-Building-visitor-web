@@ -30,12 +30,6 @@ export const FAQ_ITEMS: FaqItem[] = [
       "MyBuilding is available on Android today with the full feature set. iOS is in development. You can still register your society on the web and onboard residents with Android devices right away.",
   },
   {
-    id: "onboard",
-    question: "How do residents get access?",
-    answer:
-      "After society registration, admins invite members by flat number and mobile number. Residents download the app, verify their account, and get access to modules your society enables.",
-  },
-  {
     id: "trial",
     question: "Can we try before subscribing?",
     answer:

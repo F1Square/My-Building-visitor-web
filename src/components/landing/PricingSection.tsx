@@ -3,16 +3,17 @@ import { Check, Calendar, Star, Infinity, Smartphone } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { PlayStoreButton } from "@/components/ui/MobileAppPrompt";
-import { PLAN_ENGAGEMENT, PLAN_DISPLAY_FEATURES, formatPlanHeading } from "@/lib/appLinks";
+import { formatPlanHeading, getPlanDisplayPrices } from "@/lib/appLinks";
 import { ScrollReveal, StaggerItem, StaggerReveal } from "@/components/landing/scroll/ScrollReveal";
 import api from "@/lib/apiClient";
 import type { SubscriptionPlan } from "@/types";
 
 const PLAN_COLORS = ["#3B5FC0", "#F59E0B", "#16A34A"];
 const PLAN_ICONS = [Calendar, Star, Infinity];
+const DEFAULT_FEATURES = ["Full access to all modules"];
 
-function formatRupee(paise: number): string {
-  return `₹${(paise / 100).toLocaleString("en-IN")}`;
+function formatRupee(rupees: number): string {
+  return `₹${rupees.toLocaleString("en-IN")}`;
 }
 
 function getPeriodLabel(months: number | null): string {
@@ -22,22 +23,10 @@ function getPeriodLabel(months: number | null): string {
 }
 
 const FALLBACK_PLANS = [
-  { slug: "monthly", title: "Monthly", amount_paise: 1500, months: 1 },
-  { slug: "yearly", title: "Yearly", amount_paise: 18000, months: 12 },
+  { slug: "monthly", title: "Monthly", amount_paise: 1000, months: 1 },
+  { slug: "yearly", title: "Yearly", amount_paise: 12000, months: 12 },
   { slug: "lifetime", title: "Lifetime", amount_paise: 150000, months: null },
 ];
-
-function getFeatureList(slug: string): string[] {
-  return PLAN_DISPLAY_FEATURES[slug] ?? ["Full access to all modules"];
-}
-
-function getPlanCopy(slug: string, apiDescription?: string) {
-  const engagement = PLAN_ENGAGEMENT[slug];
-  return {
-    tagline: engagement?.tagline ?? "Built for modern societies",
-    description: engagement?.description ?? apiDescription ?? "Full access to every MyBuilding module.",
-  };
-}
 
 const PricingSection = () => {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
@@ -59,19 +48,19 @@ const PricingSection = () => {
       sort_order: i,
     }));
     return source.map((p, i) => {
-      const copy = getPlanCopy(p.slug, p.description);
+      const { amountRupees, compareAtRupees } = getPlanDisplayPrices(p.slug, p.amount_paise);
       return {
         ...p,
         heading: formatPlanHeading(p.title),
-        tagline: copy.tagline,
-        description: copy.description,
+        description: p.description || "",
         color: PLAN_COLORS[i % PLAN_COLORS.length],
         Icon: PLAN_ICONS[i % PLAN_ICONS.length],
         popular: p.months === 12,
         best: p.months == null,
-        price: formatRupee(p.amount_paise),
+        price: formatRupee(amountRupees),
+        compareAtPrice: compareAtRupees != null ? formatRupee(compareAtRupees) : null,
         period: getPeriodLabel(p.months),
-        featureList: getFeatureList(p.slug),
+        featureList: p.features?.length ? p.features : DEFAULT_FEATURES,
       };
     });
   }, [plans]);
@@ -122,17 +111,21 @@ const PricingSection = () => {
                     >
                       <Icon className="w-4 h-4" style={{ color: plan.color }} />
                     </span>
-                    <div>
-                      <h3 className="text-lg font-bold leading-tight" style={{ color: plan.color }}>
-                        {plan.heading}
-                      </h3>
-                      <p className="text-xs font-medium text-muted-foreground">{plan.tagline}</p>
-                    </div>
+                    <h3 className="text-lg font-bold leading-tight" style={{ color: plan.color }}>
+                      {plan.heading}
+                    </h3>
                   </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{plan.description}</p>
+                  {!!plan.description && (
+                    <p className="text-sm text-muted-foreground leading-relaxed">{plan.description}</p>
+                  )}
                 </div>
 
-                <div className="mb-6 flex items-baseline gap-1">
+                <div className="mb-6 flex items-baseline gap-2 flex-wrap">
+                  {plan.compareAtPrice && (
+                    <span className="text-lg font-semibold text-muted-foreground line-through decoration-solid">
+                      {plan.compareAtPrice}
+                    </span>
+                  )}
                   <span className="text-4xl font-extrabold tracking-tight">{plan.price}</span>
                   <span className="text-muted-foreground text-sm">{plan.period}</span>
                 </div>

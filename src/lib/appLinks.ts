@@ -44,39 +44,15 @@ export function formatPlanHeading(title: string): string {
   return `${t} Plan`;
 }
 
-export const PLAN_ENGAGEMENT: Record<string, { tagline: string; description: string }> = {
-  monthly: {
-    tagline: 'Pay month to month',
-    description: '₹15 per month — full access to every module, no long-term lock-in.',
-  },
-  yearly: {
-    tagline: 'One bill for the whole year',
-    description: '₹180 for 12 months — same full access, paid once a year instead of every month.',
-  },
-  lifetime: {
-    tagline: 'Pay once, use forever',
-    description: '₹1,500 one-time — unlimited access with no renewal dates to worry about.',
-  },
-};
+/** List (struck-through) vs sale prices for classic plans. */
+export const PLAN_LIST_RUPEES: Record<string, number> = { monthly: 15, yearly: 180 };
+export const PLAN_SALE_RUPEES: Record<string, number> = { monthly: 10, yearly: 120 };
 
-/** Clear, standalone bullet points for the landing pricing cards (not tied to other plans). */
-export const PLAN_DISPLAY_FEATURES: Record<string, string[]> = {
-  monthly: [
-    'Billed every month at ₹15',
-    'All modules unlocked',
-    'Maintenance, visitors, chat & announcements',
-    'Cancel anytime — no yearly contract',
-  ],
-  yearly: [
-    'Billed once a year at ₹180',
-    'Covers 12 full months of access',
-    'All modules unlocked',
-    'One payment — no monthly billing',
-  ],
-  lifetime: [
-    'Single payment of ₹1,500',
-    'All modules unlocked — forever',
-    'No expiry date, no renewals',
-    'Includes all future app updates',
-  ],
-};
+export function getPlanDisplayPrices(slug: string, amountPaise: number) {
+  const sale = PLAN_SALE_RUPEES[slug];
+  const list = PLAN_LIST_RUPEES[slug];
+  const amountRupees = sale ?? Math.round(amountPaise / 100);
+  const compareAtRupees =
+    list != null && list > amountRupees ? list : null;
+  return { amountRupees, compareAtRupees };
+}

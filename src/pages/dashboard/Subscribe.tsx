@@ -14,12 +14,13 @@ import {
 } from 'lucide-react';
 import api from '../../lib/apiClient';
 import type { SubscriptionPlan, PromoValidation } from '../../types';
+import { getPlanDisplayPrices } from '../../lib/appLinks';
 
 const PLAN_COLORS = ['#3B5FC0', '#F59E0B', '#16A34A', '#8B5CF6', '#EC4899'];
 const PLAN_ICONS = [Calendar, Star, Infinity, Star, Star];
 
-function formatRupee(paise: number): string {
-  return `₹${(paise / 100).toLocaleString('en-IN')}`;
+function formatRupee(rupees: number): string {
+  return `₹${rupees.toLocaleString('en-IN')}`;
 }
 
 function getPeriodLabel(months: number | null): string {
@@ -62,12 +63,14 @@ export default function Subscribe() {
   const displayPlans = useMemo(() => catalogPlans.map((p, i) => {
     const addP = p.newspaper_addon_paise;
     const addRupee = addP != null ? Math.round(addP / 100) : (p.months === 12 ? 36 : 3);
+    const { amountRupees, compareAtRupees } = getPlanDisplayPrices(p.slug, p.amount_paise);
     return {
       ...p,
       color: PLAN_COLORS[i % PLAN_COLORS.length],
       Icon: PLAN_ICONS[i % PLAN_ICONS.length],
       highlight: i === catalogPlans.length - 1 && catalogPlans.length > 0,
-      priceLabel: formatRupee(p.amount_paise),
+      priceLabel: formatRupee(amountRupees),
+      compareAtLabel: compareAtRupees != null ? formatRupee(compareAtRupees) : null,
       period: getPeriodLabel(p.months),
       allowNewspaper: !!p.allow_newspaper_addon && p.months != null,
       newspaperAddonRupees: addRupee,
@@ -180,7 +183,7 @@ export default function Subscribe() {
                   </div>
                   <p className="font-bold text-gray-900">
                     {currentCat
-                      ? `${formatRupee(currentCat.amount_paise)}${isLifetime ? '' : isYearly ? '/yr' : '/mo'}`
+                      ? `${formatRupee(getPlanDisplayPrices(currentCat.slug, currentCat.amount_paise).amountRupees)}${isLifetime ? '' : isYearly ? '/yr' : '/mo'}`
                       : subscription.plan}
                   </p>
                 </div>
@@ -348,7 +351,14 @@ export default function Subscribe() {
                     {plan.description && <p className="text-xs text-gray-500 mt-0.5">{plan.description}</p>}
                   </div>
                   <div className="text-right">
-                    <p className="text-xl font-bold" style={{ color: plan.color }}>{plan.priceLabel}</p>
+                    <div className="flex items-baseline justify-end gap-2">
+                      {plan.compareAtLabel && (
+                        <span className="text-sm font-semibold text-gray-400 line-through">
+                          {plan.compareAtLabel}
+                        </span>
+                      )}
+                      <p className="text-xl font-bold" style={{ color: plan.color }}>{plan.priceLabel}</p>
+                    </div>
                     <p className="text-xs text-gray-500">{plan.period}</p>
                   </div>
                 </div>
