@@ -1,9 +1,10 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getModulesForRole } from '../../lib/modules';
-import { Building2, LogOut } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { Button } from '../ui/button';
 import { ScrollArea } from '../ui/scroll-area';
+import { BrandLogo } from '../BrandLogo';
 
 export function Sidebar() {
   const { user, logout } = useAuth();
@@ -19,10 +20,7 @@ export function Sidebar() {
     <aside className="hidden md:flex flex-col w-64 bg-white border-r border-gray-100 h-screen sticky top-0">
       {/* Logo */}
       <div className="flex items-center gap-3 px-6 py-5 border-b border-gray-100">
-        <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center">
-          <Building2 className="w-5 h-5 text-white" />
-        </div>
-        <span className="text-lg font-bold text-gray-900">MyBuilding</span>
+        <BrandLogo size="md" wordmarkClassName="text-lg font-bold text-gray-900" />
       </div>
 
       {/* Building name */}

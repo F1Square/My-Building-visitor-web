@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Building2, Camera, CheckCircle2, Loader2 } from "lucide-react";
+import { Camera, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { BrandLogo } from "@/components/BrandLogo";
 
 const API_BASE = import.meta.env.VITE_API_BASE as string;
 // Entry routes are mounted at /entry (not under /api)
@@ -148,7 +149,7 @@ const VisitorEntry = () => {
     return (
       <div className="min-h-screen bg-[#f0f4f8] flex items-center justify-center p-6">
         <div className="text-center">
-          <Building2 className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+          <BrandLogo size="lg" showWordmark={false} className="justify-center mb-4" />
           <h2 className="text-xl font-bold text-gray-700">Building Not Found</h2>
           <p className="text-gray-500 mt-2">{buildingError || "Invalid QR code."}</p>
         </div>
@@ -177,9 +178,7 @@ const VisitorEntry = () => {
     <div className="min-h-screen bg-[#f0f4f8] py-8 px-4">
       {/* Header */}
       <div className="text-center mb-6">
-        <div className="w-16 h-16 rounded-2xl bg-[#1E3A8A] flex items-center justify-center mx-auto mb-3">
-          <Building2 className="w-8 h-8 text-white" />
-        </div>
+        <BrandLogo size="xl" showWordmark={false} className="justify-center mb-3" />
         <h1 className="text-2xl font-extrabold text-[#1E3A8A]">{building.name}</h1>
         <p className="text-sm text-gray-500 mt-1">{building.address || "Visitor Entry Form"}</p>
       </div>

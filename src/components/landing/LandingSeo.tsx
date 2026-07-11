@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { FAQ_ITEMS } from "@/components/landing/faqData";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/siteConfig";
 
-const OG_IMAGE = `${SITE_URL}/og-image.svg`;
+const OG_IMAGE = `${SITE_URL}/logo.png`;
 
 export function LandingSeo() {
   useEffect(() => {
@@ -27,7 +27,7 @@ export function LandingSeo() {
       "@type": "Organization",
       name: SITE_NAME,
       url: SITE_URL,
-      logo: `${SITE_URL}/favicon.svg`,
+      logo: `${SITE_URL}/app-icon.png`,
       description: SITE_DESCRIPTION,
       contactPoint: {
         "@type": "ContactPoint",

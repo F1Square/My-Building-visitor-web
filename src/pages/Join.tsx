@@ -4,8 +4,9 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { useToast } from '../components/ui/use-toast';
-import { Building2, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import api from '../lib/apiClient';
+import { BrandLogo } from '../components/BrandLogo';
 
 export default function Join() {
   const navigate = useNavigate();
@@ -33,9 +34,7 @@ export default function Join() {
             <ArrowLeft className="w-4 h-4" /> Back
           </Link>
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
-              <Building2 className="w-5 h-5 text-primary-foreground" />
-            </div>
+            <BrandLogo size="md" showWordmark={false} />
             <span className="text-xl font-bold">Join a Building</span>
           </div>
           <p className="text-muted-foreground text-sm">Enter your building ID and flat number to send a join request.</p>

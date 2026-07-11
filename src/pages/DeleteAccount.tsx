@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Building2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import api from '../lib/apiClient';
+import { BrandLogo } from '../components/BrandLogo';
 
 export default function DeleteAccount() {
   const [step, setStep] = useState<'form' | 'confirm' | 'done'>('form');
@@ -47,9 +47,7 @@ export default function DeleteAccount() {
       <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
-            <Building2 className="w-5 h-5 text-white" />
-          </div>
+          <BrandLogo size="md" showWordmark={false} />
           <div>
             <p className="font-bold text-gray-900">My Building</p>
             <p className="text-xs text-gray-500">Account Deletion Request</p>

@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Building2, CheckCircle2, ExternalLink, Loader2, Upload } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, ExternalLink, Loader2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { BrandLogo } from "@/components/BrandLogo";
 
 const API_BASE = import.meta.env.VITE_API_BASE as string;
 
@@ -165,10 +166,7 @@ export default function RegisterSociety() {
       {/* Top bar */}
       <div className="bg-white border-b border-gray-200 px-4 py-4 flex items-center gap-3">
         <Link to="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-[#3B5FC0] flex items-center justify-center">
-            <Building2 className="w-4 h-4 text-white" />
-          </div>
-          <span className="font-bold text-gray-800">MyBuilding</span>
+          <BrandLogo size="sm" wordmarkClassName="font-bold text-gray-800" />
         </Link>
         <span className="text-gray-300">|</span>
         <span className="text-sm text-gray-500">Register Your Society</span>

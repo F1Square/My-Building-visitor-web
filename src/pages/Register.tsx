@@ -2,9 +2,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Building2, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { BrandLogo } from "@/components/BrandLogo";
 
 const API_BASE = import.meta.env.VITE_API_BASE as string;
 
@@ -57,7 +58,7 @@ const Register = () => {
           <div className="absolute bottom-20 left-16 w-56 h-56 rounded-full border-2 border-primary-foreground" />
         </div>
         <div className="relative text-primary-foreground text-center">
-          <Building2 className="w-16 h-16 mx-auto mb-6" />
+          <BrandLogo size="xl" showWordmark={false} className="justify-center mb-6" />
           <h2 className="text-3xl font-extrabold font-['Plus_Jakarta_Sans'] mb-4">Join MyBuilding</h2>
           <p className="text-primary-foreground/80 max-w-sm">Get started in minutes. Set up your society and invite your residents.</p>
         </div>
@@ -71,10 +72,7 @@ const Register = () => {
               <ArrowLeft className="w-4 h-4" /> Back to home
             </Link>
             <div className="flex items-center gap-2 mb-2 lg:hidden">
-              <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
-                <Building2 className="w-5 h-5 text-primary-foreground" />
-              </div>
-              <span className="text-xl font-bold font-['Plus_Jakarta_Sans']">MyBuilding</span>
+              <BrandLogo size="md" />
             </div>
             <h1 className="text-2xl font-extrabold font-['Plus_Jakarta_Sans']">Create your account</h1>
             <p className="text-muted-foreground text-sm mt-1">Start managing your society in minutes</p>

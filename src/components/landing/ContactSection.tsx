@@ -52,7 +52,7 @@ const ContactSection = () => {
           <ScrollReveal direction="left" className="space-y-8">
             {[
               { icon: Mail,   label: "Email",  value: "matechnology02@gmail.com" },
-              { icon: Phone,  label: "Phone",  value: "+91 88666 43153" },
+              { icon: Phone,  label: "Phone",  value: "+91 76220 07825" },
               { icon: MapPin, label: "Office", value: "Surat, Gujarat, India" },
             ].map((item) => (
               <div key={item.label} className="flex items-start gap-4">
