@@ -19,6 +19,7 @@ export interface Subscription {
   start_date?: string;
   expires_at: string | null;
   newspaper_addon?: boolean;
+  newspaper_expires_at?: string | null;
 }
 
 export interface AppNotification {

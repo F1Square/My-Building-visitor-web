@@ -95,6 +95,10 @@ export default function Subscribe() {
   const daysLeft = expiresAt
     ? Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
     : null;
+  const newspaperExpiresAt = subscription?.newspaper_expires_at
+    ? new Date(subscription.newspaper_expires_at)
+    : null;
+  const newspaperExpiryShown = newspaperExpiresAt || (!isLifetime ? expiresAt : null);
 
   const applyPromo = async () => {
     if (!promoCode.trim()) return;
@@ -232,7 +236,13 @@ export default function Subscribe() {
 
                 {subscription.newspaper_addon ? (
                   <div className="text-center">
-                    <p className="text-sm text-green-600 mb-3">Access unlocked until your plan expires</p>
+                    {newspaperExpiryShown ? (
+                      <p className="text-sm text-gray-600 mb-3">
+                        Expires on {newspaperExpiryShown.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-green-600 mb-3">Newspaper access is active</p>
+                    )}
                     <Button variant="ghost" className="text-red-600" disabled={newspaperLoading} onClick={disableNewspaperAddon}>
                       Disable plan
                     </Button>

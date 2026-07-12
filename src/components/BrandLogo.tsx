@@ -13,9 +13,8 @@ const SIZE_CLASS = {
   xl: "h-16 w-16",
 } as const;
 
-/** MyBuilding app icon + optional wordmark for consistent web branding. */
 export function BrandLogo({
-  size = "md",
+  size = "md", 
   showWordmark = true,
   className = "",
   wordmarkClassName = "text-xl font-bold font-['Plus_Jakarta_Sans']",
