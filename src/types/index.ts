@@ -142,10 +142,13 @@ export interface NewspaperEdition {
 export interface SocietyRule {
   id: string;
   building_id: string;
-  rule_number?: number;
   title: string;
   description?: string;
+  category?: string;
+  order_index?: number;
   created_at: string;
+  updated_at?: string;
+  updater?: { name?: string | null } | null;
 }
 
 export interface SubscriptionPlan {

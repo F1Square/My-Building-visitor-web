@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
-import { Camera, CheckCircle2, Loader2 } from "lucide-react";
+import { Link, useParams } from "react-router-dom";
+import { Camera, CheckCircle2, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,7 @@ import { BrandLogo } from "@/components/BrandLogo";
 const API_BASE = import.meta.env.VITE_API_BASE as string;
 // Entry routes are mounted at /entry (not under /api)
 const BACKEND_BASE = API_BASE.replace(/\/api$/, "");
+const SUBMIT_TIMEOUT_MS = 60000;
 
 interface BuildingInfo {
   id: string;
@@ -22,7 +23,7 @@ interface BuildingInfo {
 
 const PHONE_RE = /^[6-9]\d{9}$/;
 
-function compressImageFile(file: File, maxWidth = 960, quality = 0.75): Promise<string> {
+function compressImageFile(file: File, maxWidth = 720, quality = 0.65): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -33,19 +34,30 @@ function compressImageFile(file: File, maxWidth = 960, quality = 0.75): Promise<
           height = Math.round((height * maxWidth) / width);
           width = maxWidth;
         }
-        const canvas = document.createElement('canvas');
+        const canvas = document.createElement("canvas");
         canvas.width = width;
         canvas.height = height;
-        canvas.getContext('2d')?.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', quality));
+        canvas.getContext("2d")?.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
       };
-      img.onerror = () => reject(new Error('Failed to load image'));
+      img.onerror = () => reject(new Error("Failed to load image"));
       img.src = e.target?.result as string;
     };
-    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.onerror = () => reject(new Error("Failed to read file"));
     reader.readAsDataURL(file);
   });
 }
+
+const CloseHomeButton = ({ className = "" }: { className?: string }) => (
+  <Link
+    to="/"
+    className={`inline-flex items-center justify-center gap-1.5 rounded-full bg-white/90 border border-gray-200 shadow-sm px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-white ${className}`}
+    aria-label="Close and go to home"
+  >
+    <X className="w-4 h-4" />
+    Close
+  </Link>
+);
 
 const VisitorEntry = () => {
   const { building_id } = useParams<{ building_id: string }>();
@@ -68,7 +80,6 @@ const VisitorEntry = () => {
 
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // Fetch building info on mount
   useEffect(() => {
     if (!building_id) return;
     fetch(`${BACKEND_BASE}/entry/building/${building_id}/info`)
@@ -109,6 +120,8 @@ const VisitorEntry = () => {
     }
 
     setSubmitting(true);
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), SUBMIT_TIMEOUT_MS);
     try {
       const payload: Record<string, string> = {
         name: name.trim(),
@@ -123,6 +136,7 @@ const VisitorEntry = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
+        signal: controller.signal,
       });
       const data = await res.json();
       if (!res.ok || data.error) {
@@ -130,9 +144,17 @@ const VisitorEntry = () => {
       } else {
         setSuccess(true);
       }
-    } catch {
-      toast({ title: "Network error", description: "Check your connection and try again.", variant: "destructive" });
+    } catch (err) {
+      const aborted = err instanceof DOMException && err.name === "AbortError";
+      toast({
+        title: aborted ? "Request timed out" : "Network error",
+        description: aborted
+          ? "Upload took too long. Try a clearer, smaller photo and submit again."
+          : "Check your connection and try again.",
+        variant: "destructive",
+      });
     } finally {
+      window.clearTimeout(timeoutId);
       setSubmitting(false);
     }
   };
@@ -147,7 +169,10 @@ const VisitorEntry = () => {
 
   if (buildingError || !building) {
     return (
-      <div className="min-h-screen bg-[#f0f4f8] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[#f0f4f8] flex items-center justify-center p-6 relative">
+        <div className="absolute top-4 right-4">
+          <CloseHomeButton />
+        </div>
         <div className="text-center">
           <BrandLogo size="lg" showWordmark={false} className="justify-center mb-4" />
           <h2 className="text-xl font-bold text-gray-700">Building Not Found</h2>
@@ -159,14 +184,20 @@ const VisitorEntry = () => {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-[#f0f4f8] flex items-center justify-center p-6">
-        <div className="text-center">
+      <div className="min-h-screen bg-[#f0f4f8] flex items-center justify-center p-6 relative">
+        <div className="absolute top-4 right-4">
+          <CloseHomeButton />
+        </div>
+        <div className="text-center max-w-sm">
           <CheckCircle2 className="w-20 h-20 mx-auto text-green-500 mb-4" />
           <h2 className="text-2xl font-extrabold text-green-600">Entry Registered!</h2>
           <p className="text-gray-500 mt-3 leading-relaxed">
             Your visit to <strong>{building.name}</strong> has been recorded.<br />
             The flat resident has been notified.
           </p>
+          <Button asChild className="mt-6 bg-[#1E3A8A] hover:bg-[#1e3a8a]/90 text-white font-bold">
+            <Link to="/">Back to Home</Link>
+          </Button>
         </div>
       </div>
     );
@@ -175,15 +206,17 @@ const VisitorEntry = () => {
   const hasWings = !!building.has_wings && (building.wing_list?.length ?? 0) > 0;
 
   return (
-    <div className="min-h-screen bg-[#f0f4f8] py-8 px-4">
-      {/* Header */}
+    <div className="min-h-screen bg-[#f0f4f8] py-8 px-4 relative">
+      <div className="absolute top-4 right-4 z-10">
+        <CloseHomeButton />
+      </div>
+
       <div className="text-center mb-6">
         <BrandLogo size="xl" showWordmark={false} className="justify-center mb-3" />
         <h1 className="text-2xl font-extrabold text-[#1E3A8A]">{building.name}</h1>
         <p className="text-sm text-gray-500 mt-1">{building.address || "Visitor Entry Form"}</p>
       </div>
 
-      {/* Form card */}
       <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-md p-6 max-w-md mx-auto space-y-4">
         <div className="space-y-1">
           <Label htmlFor="name">Full Name <span className="text-red-500">*</span></Label>
@@ -232,7 +265,6 @@ const VisitorEntry = () => {
           <Textarea id="purpose" placeholder="e.g. Delivery, Meeting, Repair work..." value={purpose} onChange={(e) => setPurpose(e.target.value)} className="resize-none h-20" />
         </div>
 
-        {/* Photo upload */}
         <div className="space-y-2">
           <Label>Live Photo <span className="text-red-500">*</span></Label>
           <button
