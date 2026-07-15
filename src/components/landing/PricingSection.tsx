@@ -84,12 +84,12 @@ const PricingSection = () => {
             return (
               <StaggerItem key={plan.slug}>
               <div
-                className={`relative rounded-2xl border p-7 lg:p-8 bg-card flex flex-col transition-shadow hover:shadow-md h-full ${
+                className={`relative rounded-3xl border p-7 lg:p-8 bg-card/90 backdrop-blur-sm flex flex-col transition-shadow hover:shadow-md h-full ${
                   plan.best
-                    ? "border-green-500/80 shadow-lg shadow-green-500/10 ring-1 ring-green-500/20"
+                    ? "border-emerald-500/60 shadow-lg shadow-emerald-500/10 ring-1 ring-emerald-500/15"
                     : plan.popular
-                    ? "border-primary shadow-lg shadow-primary/10 md:scale-[1.02] z-10"
-                    : "border-border"
+                    ? "border-primary/70 shadow-lg shadow-primary/10 z-10"
+                    : "border-border/80"
                 }`}
               >
                 {plan.best && (

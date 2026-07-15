@@ -49,9 +49,13 @@ const Login = () => {
           <div className="absolute bottom-32 right-16 w-48 h-48 rounded-full border-2 border-primary-foreground" />
         </div>
         <div className="relative text-primary-foreground text-center">
-          <BrandLogo size="xl" showWordmark={false} className="justify-center mb-6" />
-          <h2 className="text-3xl font-extrabold font-['Plus_Jakarta_Sans'] mb-4">Welcome to MyBuilding</h2>
-          <p className="text-primary-foreground/80 max-w-sm">Manage your society smarter. Bills, visitors, complaints—all in one place.</p>
+          <BrandLogo
+            size="xl"
+            className="justify-center mb-8"
+            wordmarkClassName="text-3xl font-extrabold font-['Plus_Jakarta_Sans'] text-white"
+          />
+          <h2 className="text-3xl font-extrabold font-['Plus_Jakarta_Sans'] mb-4">Welcome back</h2>
+          <p className="text-primary-foreground/80 max-w-sm">Manage your society smarter. Bills, visitors, and complaints—all in one place.</p>
         </div>
       </div>
 

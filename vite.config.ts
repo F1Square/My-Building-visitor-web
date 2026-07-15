@@ -10,6 +10,17 @@ export default defineConfig({
     hmr: {
       overlay: false,
     },
+    // Same-origin /api proxy for local web → Express on :5000 (avoids CORS/network IP issues)
+    proxy: {
+      "/api": {
+        target: "http://127.0.0.1:5000",
+        changeOrigin: true,
+      },
+      "/health": {
+        target: "http://127.0.0.1:5000",
+        changeOrigin: true,
+      },
+    },
   },
   plugins: [react()],
   resolve: {

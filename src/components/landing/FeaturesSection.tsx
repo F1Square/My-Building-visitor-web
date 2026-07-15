@@ -29,11 +29,11 @@ const FeaturesSection = () => {
         <StaggerReveal className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {features.map((f) => (
             <StaggerItem key={f.title}>
-              <div className="group relative rounded-2xl border border-border bg-card p-6 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 hover:-translate-y-1 h-full">
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                  <f.icon className="w-6 h-6 text-primary group-hover:text-primary-foreground" />
+              <div className="group relative surface-card p-6 transition-shadow duration-300 hover:shadow-md h-full">
+                <div className="w-11 h-11 rounded-2xl bg-primary/[0.08] flex items-center justify-center mb-5">
+                  <f.icon className="w-5 h-5 text-primary" />
                 </div>
-                <h3 className="font-bold text-lg mb-2">{f.title}</h3>
+                <h3 className="font-semibold text-lg mb-2 tracking-tight">{f.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
               </div>
             </StaggerItem>

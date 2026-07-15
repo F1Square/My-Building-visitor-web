@@ -207,12 +207,14 @@ export interface Building {
 
 export interface ActivityLog {
   id: string;
-  user_id: string;
-  users?: { name: string };
+  user_id?: string;
+  user_name?: string;
+  user_role?: string;
   action: string;
   module?: string;
   building_id?: string;
-  buildings?: { name: string };
+  detail?: Record<string, unknown> & { level?: string; error_message?: string; status_code?: number };
+  ip_address?: string;
   created_at: string;
 }
 

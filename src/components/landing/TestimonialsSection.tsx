@@ -58,8 +58,8 @@ const testimonials: Testimonial[] = [
 
 function TestimonialCard({ t }: { t: Testimonial }) {
   return (
-    <article className="rounded-2xl border border-border bg-card p-8 h-full flex flex-col shadow-sm hover:shadow-md transition-shadow">
-      <Quote className="w-8 h-8 text-primary/20 mb-4" aria-hidden />
+    <article className="surface-card p-8 h-full flex flex-col hover:shadow-md transition-shadow">
+      <Quote className="w-7 h-7 text-primary/25 mb-4" aria-hidden />
       <div className="flex gap-1 mb-4" aria-label={`${t.rating} out of 5 stars`}>
         {Array.from({ length: t.rating }).map((_, i) => (
           <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
