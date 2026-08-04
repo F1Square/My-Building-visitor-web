@@ -86,7 +86,7 @@ const ContactSection = () => {
             <Input
               type="tel"
               inputMode="numeric"
-              placeholder="Mobile number *"
+              placeholder="Mobile number"
               value={form.phone}
               onChange={set("phone")}
               maxLength={10}
