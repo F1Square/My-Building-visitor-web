@@ -9,6 +9,7 @@ import { Badge } from '../../../components/ui/badge';
 import { Button } from '../../../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui/tabs';
 import { useToast } from '../../../components/ui/use-toast';
+import { UploadProgressBar } from '../../../components/ui/UploadProgressBar';
 import { Receipt, Home, Banknote, Upload, Smartphone, CheckCircle, Trash2, FileText } from 'lucide-react';
 import { MobileAppPrompt, MobileOnlyButton } from '../../../components/ui/MobileAppPrompt';
 import api from '../../../lib/apiClient';
@@ -83,6 +84,7 @@ export default function MaintenanceCategory() {
   const [bills, setBills] = useState<MaintenanceBill[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [deleteBillId, setDeleteBillId] = useState<string | null>(null);
   const [managerTab, setManagerTab] = useState<'payments' | 'bills'>('payments');
 
@@ -178,6 +180,7 @@ export default function MaintenanceCategory() {
 
   const uploadReceipt = async (recordId: string, file: File) => {
     setUploadingId(recordId);
+    setUploadProgress(0);
     try {
       const reader = new FileReader();
       const base64 = await new Promise<string>((resolve, reject) => {
@@ -185,13 +188,17 @@ export default function MaintenanceCategory() {
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
-      await api.patch(`/maintenance/payments/${recordId}/receipt`, { receipt_url: base64 });
+      await api.upload(`/maintenance/payments/${recordId}/receipt`, { receipt_url: base64 }, {
+        method: 'PATCH',
+        onProgress: setUploadProgress,
+      });
       toast({ title: 'Receipt uploaded' });
       loadRecords();
     } catch (e: unknown) {
       toast({ title: 'Upload failed', description: (e as Error).message, variant: 'destructive' });
     } finally {
       setUploadingId(null);
+      setUploadProgress(null);
     }
   };
 
@@ -291,11 +298,19 @@ export default function MaintenanceCategory() {
                     }}
                   />
                   <Button size="sm" variant="outline" className="gap-1" disabled={uploadingId === r.id} asChild>
-                    <span><Upload className="w-3.5 h-3.5" /> {uploadingId === r.id ? 'Uploading...' : 'Upload Receipt'}</span>
+                    <span>
+                      <Upload className="w-3.5 h-3.5" />{' '}
+                      {uploadingId === r.id
+                        ? (uploadProgress != null ? `Uploading… ${uploadProgress}%` : 'Uploading...')
+                        : 'Upload Receipt'}
+                    </span>
                   </Button>
                 </label>
               )}
             </div>
+            {uploadingId === r.id && (
+              <UploadProgressBar progress={uploadProgress} className="w-full space-y-1.5" />
+            )}
           </div>
         )}
       </div>
