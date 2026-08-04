@@ -106,10 +106,15 @@ export interface Complaint {
 export interface Member {
   id: string;
   name: string;
+  email?: string;
   flat_no?: string;
   phone?: string;
   role: string;
   wing?: string;
+  status?: string;
+  building_id?: string;
+  building_name?: string;
+  created_at?: string;
 }
 
 export interface Expense {
@@ -235,17 +240,39 @@ export interface Promo {
 export interface Inquiry {
   id: string;
   society_name?: string;
+  society_type?: string;
+  society_logo?: string;
   user_name?: string;
   user_email?: string;
   user_phone?: string;
+  total_wings?: number;
   city?: string;
   state?: string;
+  pincode?: string;
+  address?: string;
+  late_fee?: number | null;
+  maintenance_fixed?: boolean;
+  water_bill_separate?: boolean;
+  payment_method?: string;
+  payment_tc?: string;
+  admin_note?: string;
   status?: string;
   created_at: string;
   /** Legacy contact-form shaped fields (unused by /inquiries) */
   name?: string;
   email?: string;
   message?: string;
+}
+
+export interface WebsiteContact {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string | null;
+  subject: string;
+  message: string;
+  status: 'new' | 'read' | 'replied';
+  created_at: string;
 }
 
 export interface BankDetails {

@@ -18,7 +18,7 @@ export function BottomNav({ onBellClick, unreadCount = 0 }: BottomNavProps) {
     ...(showHelp ? [{ icon: HelpCircle, label: 'Help', path: '/dashboard/support' as string | null, onClick: undefined, badge: 0 }] : []),
     { icon: Bell, label: 'Alerts', path: null, onClick: onBellClick, badge: unreadCount },
     { icon: User, label: 'Profile', path: '/dashboard/profile' },
-    { icon: Grid3X3, label: 'More', path: user?.role === 'admin' ? '/dashboard/admin' : '/dashboard/society-rules' },
+    { icon: Grid3X3, label: 'More', path: user?.role === 'admin' ? '/dashboard/admin/buildings' : '/dashboard/society-rules' },
   ];
 
   return (

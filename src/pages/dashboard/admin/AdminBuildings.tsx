@@ -7,6 +7,8 @@ import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { Label } from '../../../components/ui/label';
 import { Switch } from '../../../components/ui/switch';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../../components/ui/dialog';
+import { RecordDetailRows } from '../../../components/ui/RecordDetailRows';
 import { Building2, Plus, X } from 'lucide-react';
 import { useToast } from '../../../components/ui/use-toast';
 import api from '../../../lib/apiClient';
@@ -18,6 +20,7 @@ export default function AdminBuildings() {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [detail, setDetail] = useState<Building | null>(null);
 
   // New building form state
   const [name, setName] = useState('');
@@ -106,7 +109,12 @@ export default function AdminBuildings() {
       ) : (
         <div className="space-y-3">
           {buildings.map(b => (
-            <div key={b.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+            <button
+              key={b.id}
+              type="button"
+              onClick={() => setDetail(b)}
+              className="w-full text-left bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all"
+            >
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <p className="font-bold text-gray-900">{b.name}</p>
@@ -122,10 +130,42 @@ export default function AdminBuildings() {
                   {b.member_count !== undefined && <p className="text-xs text-gray-400">{b.member_count} members</p>}
                 </div>
               </div>
-            </div>
+            </button>
           ))}
         </div>
       )}
+
+      <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{detail?.name || 'Building'}</DialogTitle>
+          </DialogHeader>
+          {detail && (
+            <div className="space-y-3 mt-1">
+              {detail.subscription_status ? (
+                <Badge variant={detail.subscription_status === 'active' ? 'default' : 'secondary'}>
+                  {detail.subscription_status}
+                </Badge>
+              ) : null}
+              <RecordDetailRows
+                rows={[
+                  ['Address', detail.address],
+                  ['City', detail.city],
+                  ['State', detail.state],
+                  ['Pramukh', detail.pramukh_name],
+                  ['Members', detail.member_count],
+                  ['Wings enabled', detail.has_wings == null ? null : detail.has_wings ? 'Yes' : 'No'],
+                  ['Late fees', detail.late_fees_enabled ? (detail.late_fees_amount != null ? `₹${detail.late_fees_amount}` : 'Enabled') : 'No'],
+                  ['Water reading', detail.water_reading_enabled == null ? null : detail.water_reading_enabled ? 'Yes' : 'No'],
+                  ['Payment methods', detail.payment_method],
+                  ['Payment T&C', detail.payment_tc],
+                  ['Created', detail.created_at ? new Date(detail.created_at).toLocaleString('en-IN') : null],
+                ]}
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Create Building Modal */}
       {showCreateModal && (

@@ -50,6 +50,7 @@ import AdminSubscriptions from "./pages/dashboard/admin/AdminSubscriptions";
 import ActivityLogs from "./pages/dashboard/admin/ActivityLogs";
 import Promos from "./pages/dashboard/admin/Promos";
 import Inquiries from "./pages/dashboard/admin/Inquiries";
+import WebsiteContacts from "./pages/dashboard/admin/WebsiteContacts";
 import SupportTickets from "./pages/dashboard/admin/SupportTickets";
 import BankDetails from "./pages/dashboard/admin/BankDetails";
 
@@ -116,6 +117,7 @@ const App = () => (
                   <Route path="/dashboard/admin/activity-logs" element={<ActivityLogs />} />
                   <Route path="/dashboard/admin/promos" element={<Promos />} />
                   <Route path="/dashboard/admin/inquiries" element={<Inquiries />} />
+                  <Route path="/dashboard/admin/website-contacts" element={<WebsiteContacts />} />
                   <Route path="/dashboard/admin/support" element={<SupportTickets />} />
                   <Route path="/dashboard/admin/bank-details" element={<BankDetails />} />
                 </Route>

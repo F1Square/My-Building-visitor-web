@@ -3,6 +3,8 @@ import { PageHeader } from '../../../components/ui/PageHeader';
 import { LoadingSkeleton } from '../../../components/ui/LoadingSkeleton';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { Input } from '../../../components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../../components/ui/dialog';
+import { RecordDetailRows } from '../../../components/ui/RecordDetailRows';
 import { ListOrdered } from 'lucide-react';
 import api from '../../../lib/apiClient';
 import type { ActivityLog } from '../../../types';
@@ -24,6 +26,7 @@ export default function ActivityLogs() {
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [date, setDate] = useState('');
+  const [detail, setDetail] = useState<ActivityLog | null>(null);
 
   const fetchLogs = useCallback((dateFilter = date) => {
     setLoading(true);
@@ -81,7 +84,12 @@ export default function ActivityLogs() {
           {logs.map((l) => {
             const isError = l.detail?.level === 'error' || l.action?.startsWith('error_');
             return (
-              <div key={l.id} className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
+              <button
+                key={l.id}
+                type="button"
+                onClick={() => setDetail(l)}
+                className="w-full text-left bg-white rounded-xl p-3 shadow-sm border border-gray-100 hover:shadow-md transition-all"
+              >
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <p className="text-sm font-semibold text-gray-900">{l.user_name ?? 'Unknown'}</p>
@@ -98,11 +106,40 @@ export default function ActivityLogs() {
                     {new Date(l.created_at).toLocaleString('en-IN')}
                   </p>
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>
       )}
+
+      <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{detail?.action || 'Activity log'}</DialogTitle>
+          </DialogHeader>
+          {detail && (
+            <div className="space-y-3 mt-1">
+              <RecordDetailRows
+                rows={[
+                  ['User', detail.user_name],
+                  ['Role', detail.user_role],
+                  ['Module', detail.module],
+                  ['IP', detail.ip_address],
+                  ['When', new Date(detail.created_at).toLocaleString('en-IN')],
+                ]}
+              />
+              {detail.detail && Object.keys(detail.detail).length > 0 ? (
+                <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                  <p className="text-xs font-semibold text-gray-500 mb-2">Detail</p>
+                  <pre className="text-xs text-gray-800 whitespace-pre-wrap break-words">
+                    {JSON.stringify(detail.detail, null, 2)}
+                  </pre>
+                </div>
+              ) : null}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

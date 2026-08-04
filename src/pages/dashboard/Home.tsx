@@ -53,8 +53,8 @@ export default function Home() {
     navigate(path);
   }, [hasActiveSubscription, hasNewspaperAddon, navigate, role]);
 
-  // Pending user — no building
-  if (user && !user.building_id) {
+  // Pending resident — no building (admins are platform-wide and skip this)
+  if (user && user.role !== 'admin' && !user.building_id) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center">
         <Building2 className="w-16 h-16 text-blue-300" />
@@ -78,7 +78,7 @@ export default function Home() {
     <div className="w-full max-w-full">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{user?.building_name || (user?.role === 'admin' ? 'Admin Panel' : 'My Building')} 👋</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{user?.building_name || (user?.role === 'admin' ? 'Admin Dashboard' : 'My Building')} 👋</h1>
 
       </div>
 
