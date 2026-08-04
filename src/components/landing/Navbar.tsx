@@ -3,18 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { BrandLogo } from "@/components/BrandLogo";
+import { LANDING_NAV_LINKS } from "@/components/landing/landingSections";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
-
-  const links = [
-    { label: "App Demo", href: "#app-demo" },
-    { label: "Features", href: "#features" },
-    { label: "Pricing", href: "#pricing" },
-    { label: "Testimonials", href: "#testimonials" },
-    { label: "FAQ", href: "#faq" },
-    { label: "Contact", href: "#contact" },
-  ];
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/70 backdrop-blur-2xl border-b border-border/60">
@@ -25,7 +17,7 @@ const Navbar = () => {
           </Link>
 
           <div className="hidden md:flex items-center gap-7">
-            {links.map((l) => (
+            {LANDING_NAV_LINKS.map((l) => (
               <a key={l.href} href={l.href} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                 {l.label}
               </a>
@@ -49,7 +41,7 @@ const Navbar = () => {
 
       {open && (
         <div className="md:hidden border-t border-border bg-background px-4 py-4 space-y-3">
-          {links.map((l) => (
+          {LANDING_NAV_LINKS.map((l) => (
             <a key={l.href} href={l.href} onClick={() => setOpen(false)} className="block text-sm font-medium text-muted-foreground hover:text-foreground">
               {l.label}
             </a>

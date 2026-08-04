@@ -9,7 +9,7 @@ export const FAQ_ITEMS: FaqItem[] = [
     id: "pricing",
     question: "How does pricing work?",
     answer:
-      "Register your society on the web for free. Choose a Monthly, Yearly, or Lifetime plan inside the MyBuilding Android app and pay securely. Pricing is per society — residents and committee members use the app at no extra per-user charge.",
+      "Register your society on the web for free. Choose a Monthly, Yearly, or Lifetime plan inside the MyBuilding Android app and pay securely. Pricing is per society - residents and committee members use the app at no extra per-user charge.",
   },
   {
     id: "security",

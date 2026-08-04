@@ -22,7 +22,7 @@ const HeroSection = () => {
   const mockupY = useTransform(scrollYProgress, [0, 1], [0, 28]);
 
   return (
-    <section ref={sectionRef} className="relative pt-28 sm:pt-36 pb-24 px-4 overflow-hidden">
+    <section ref={sectionRef} id="hero" className="relative pt-28 sm:pt-36 pb-24 px-4 overflow-hidden">
       <motion.div
         className="absolute top-0 left-1/4 w-[28rem] h-[28rem] bg-primary/[0.07] rounded-full blur-3xl -translate-y-1/2"
         style={reduced ? undefined : { y: blobY1 }}
