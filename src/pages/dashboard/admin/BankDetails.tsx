@@ -107,7 +107,7 @@ export default function BankDetailsPage() {
           selectedWing
             ? `${selectedBuilding?.name || 'Society'} · Wing ${selectedWing}`
             : selectedBuilding
-              ? `${selectedBuilding.name} — select a wing`
+              ? `${selectedBuilding.name} - select a wing`
               : 'Society wing payout accounts'
         }
       />

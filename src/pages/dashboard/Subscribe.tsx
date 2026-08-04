@@ -140,7 +140,7 @@ export default function Subscribe() {
 
   return (
     <div>
-      <PageHeader title="Subscription" subtitle="View plans on web — subscribe in the mobile app" />
+      <PageHeader title="Subscription" subtitle="View plans on web - subscribe in the mobile app" />
 
       <MobileAppPrompt feature="subscription" variant="banner" className="mb-5" />
 
@@ -194,7 +194,7 @@ export default function Subscribe() {
 
                 {isLifetime ? (
                   <p className="text-sm text-green-600 flex items-center gap-2">
-                    <Infinity className="w-4 h-4" /> Never expires — you&apos;re set for life
+                    <Infinity className="w-4 h-4" /> Never expires - you&apos;re set for life
                   </p>
                 ) : (
                   <p className={`text-sm flex items-center gap-2 ${daysLeft !== null && daysLeft <= 5 ? 'text-red-600' : 'text-gray-600'}`}>
@@ -280,7 +280,7 @@ export default function Subscribe() {
         <div className="space-y-4">
           <div>
             <h2 className="text-lg font-bold text-gray-900">Choose a Plan</h2>
-            <p className="text-sm text-gray-500">Browse plans here — payment is completed in the mobile app</p>
+            <p className="text-sm text-gray-500">Browse plans here - payment is completed in the mobile app</p>
           </div>
 
           <div
@@ -296,7 +296,7 @@ export default function Subscribe() {
               <p className="text-sm text-gray-500">Select when subscribing in the mobile app</p>
               <p className="text-sm font-bold text-orange-600 mt-1">From +₹{minNewsRupee} / month tier</p>
             </div>
-            <Switch checked={includeNewspaper} onCheckedChange={setIncludeNewspaper} disabled title="Preview only — toggle in mobile app at checkout" />
+            <Switch checked={includeNewspaper} onCheckedChange={setIncludeNewspaper} disabled title="Preview only - toggle in mobile app at checkout" />
           </div>
 
           <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
@@ -318,7 +318,7 @@ export default function Subscribe() {
               <div className="flex items-center gap-2 mt-2 p-2 bg-green-50 rounded-lg text-sm text-green-700">
                 <CheckCircle2 className="w-4 h-4 shrink-0" />
                 <span className="flex-1">
-                  Valid — use code <strong>{promoResult.code}</strong> in the mobile app at checkout
+                  Valid - use code <strong>{promoResult.code}</strong> in the mobile app at checkout
                   {promoResult.type === 'percent'
                     ? ` (${promoResult.value}% off)`
                     : ` (₹${promoResult.value} off)`}
@@ -398,7 +398,7 @@ export default function Subscribe() {
                     disabled={isLowerOrEqual}
                   >
                     <Smartphone className="w-4 h-4" />
-                    {hasActiveSubscription ? `Upgrade — ${plan.priceLabel}` : `Subscribe — ${plan.priceLabel}`}
+                    {hasActiveSubscription ? `Upgrade - ${plan.priceLabel}` : `Subscribe - ${plan.priceLabel}`}
                     {includeNewspaper && plan.allowNewspaper ? ` + ₹${plan.newspaperAddonRupees} newspaper` : ''}
                     {promoResult ? ` → ₹${promoResult.final_amount}` : ''}
                     <span className="text-xs opacity-90 ml-1">(mobile app)</span>

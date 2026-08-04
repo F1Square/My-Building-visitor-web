@@ -13,7 +13,7 @@ export type MobileFeature =
 export const MOBILE_FEATURE_COPY: Record<MobileFeature, { title: string; message: string }> = {
   subscription: {
     title: 'Subscribe in the app',
-    message: 'Pick your plan and pay securely in the MyBuilding Android app — takes under a minute.',
+    message: 'Pick your plan and pay securely in the MyBuilding Android app - takes under a minute.',
   },
   'maintenance-payment': {
     title: 'Pay bills in the app',
@@ -25,7 +25,7 @@ export const MOBILE_FEATURE_COPY: Record<MobileFeature, { title: string; message
   },
   'visitor-qr': {
     title: 'QR posters in the app',
-    message: 'Download and print visitor QR posters for your gate — available in the MyBuilding app.',
+    message: 'Download and print visitor QR posters for your gate - available in the MyBuilding app.',
   },
   'push-notifications': {
     title: 'Instant alerts in the app',

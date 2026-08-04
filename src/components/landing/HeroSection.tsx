@@ -55,7 +55,7 @@ const HeroSection = () => {
 
           <ScrollReveal delay={0.18}>
             <p className="text-lg sm:text-xl text-muted-foreground max-w-xl mx-auto mb-10 leading-relaxed">
-              Maintenance, visitors, complaints, and community — crafted into one calm, powerful experience.
+              Maintenance, visitors, complaints, and community - crafted into one calm, powerful experience.
             </p>
           </ScrollReveal>
 

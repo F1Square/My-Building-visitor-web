@@ -243,7 +243,7 @@ export default function Maintenance() {
             </div>
             {billForm.category === 'maintenance' && (
               <div className="space-y-2">
-                <Label>Late Penalty Amount (₹) — optional</Label>
+                <Label>Late Penalty Amount (₹) - optional</Label>
                 <Input type="number" placeholder="e.g. 100" value={billForm.penalty_amount} onChange={e => setBillForm(f => ({ ...f, penalty_amount: e.target.value }))} />
               </div>
             )}

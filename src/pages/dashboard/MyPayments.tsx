@@ -135,7 +135,7 @@ export default function MyPayments() {
 
   return (
     <div>
-      <PageHeader title="My Payments" subtitle="View history on web — pay online in the mobile app" />
+      <PageHeader title="My Payments" subtitle="View history on web - pay online in the mobile app" />
 
       <MobileAppPrompt feature="maintenance-payment" variant="banner" className="mb-5" />
 

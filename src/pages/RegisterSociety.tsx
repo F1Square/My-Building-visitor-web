@@ -464,7 +464,7 @@ export default function RegisterSociety() {
                     <>
                       <Upload className="w-8 h-8 text-gray-400" />
                       <p className="text-sm text-gray-500">Click to upload society logo</p>
-                      <p className="text-xs text-gray-400">JPG, PNG, WebP, or GIF — up to 2 MB</p>
+                      <p className="text-xs text-gray-400">JPG, PNG, WebP, or GIF - up to 2 MB</p>
                     </>
                   )}
                   {logoPreview && (

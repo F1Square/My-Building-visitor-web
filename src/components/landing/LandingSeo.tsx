@@ -7,7 +7,7 @@ const OG_IMAGE = `${SITE_URL}/og-image.svg`;
 export function LandingSeo() {
   useEffect(() => {
     const previousTitle = document.title;
-    document.title = `${SITE_NAME} — ${SITE_TAGLINE}`;
+    document.title = `${SITE_NAME} - ${SITE_TAGLINE}`;
 
     const faqJsonLd = {
       "@context": "https://schema.org",
@@ -76,14 +76,14 @@ export function LandingSeo() {
     setMeta("description", SITE_DESCRIPTION);
     setMeta("keywords", "society management app, apartment management, visitor management, maintenance billing, housing society India, Gujarat");
     setMeta("robots", "index, follow");
-    setMeta("og:title", `${SITE_NAME} — ${SITE_TAGLINE}`, true);
+    setMeta("og:title", `${SITE_NAME} - ${SITE_TAGLINE}`, true);
     setMeta("og:description", SITE_DESCRIPTION, true);
     setMeta("og:type", "website", true);
     setMeta("og:url", SITE_URL, true);
     setMeta("og:image", OG_IMAGE, true);
     setMeta("og:site_name", SITE_NAME, true);
     setMeta("twitter:card", "summary_large_image");
-    setMeta("twitter:title", `${SITE_NAME} — ${SITE_TAGLINE}`);
+    setMeta("twitter:title", `${SITE_NAME} - ${SITE_TAGLINE}`);
     setMeta("twitter:description", SITE_DESCRIPTION);
     setMeta("twitter:image", OG_IMAGE);
 

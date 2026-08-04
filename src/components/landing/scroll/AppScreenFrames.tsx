@@ -18,7 +18,7 @@ export const APP_FRAMES: AppFrame[] = [
   {
     id: "dashboard",
     title: "Society dashboard",
-    subtitle: "All modules at a glance — maintenance, visitors, complaints, and more.",
+    subtitle: "All modules at a glance - maintenance, visitors, complaints, and more.",
     accent: "from-primary/20 to-primary/5",
   },
   {

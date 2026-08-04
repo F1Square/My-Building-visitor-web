@@ -91,7 +91,7 @@ function DesktopScrollScrub() {
       id="app-demo"
       ref={containerRef}
       className="relative h-[420vh]"
-      aria-label="Interactive app preview — scroll to scrub through screens"
+      aria-label="Interactive app preview - scroll to scrub through screens"
     >
       <div className="sticky top-0 h-screen flex items-center overflow-hidden">
         <motion.div
@@ -111,7 +111,7 @@ function DesktopScrollScrub() {
                 <span className="text-gradient block">every module</span>
               </h2>
               <p className="text-muted-foreground text-lg mb-8 max-w-md">
-                A scroll-linked preview of MyBuilding — scrub through screens like a stop-motion demo as you scroll.
+                A scroll-linked preview of MyBuilding - scrub through screens like a stop-motion demo as you scroll.
               </p>
             </ScrollReveal>
 

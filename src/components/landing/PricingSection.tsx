@@ -74,7 +74,7 @@ const PricingSection = () => {
             Plans that grow with your society
           </h2>
           <p className="text-muted-foreground text-lg leading-relaxed">
-            Register on the web in minutes. Subscribe and pay inside the MyBuilding Android app — simple, secure, and built for Indian societies.
+            Register on the web in minutes. Subscribe and pay inside the MyBuilding Android app - simple, secure, and built for Indian societies.
           </p>
         </ScrollReveal>
 
@@ -162,7 +162,7 @@ const PricingSection = () => {
           <h3 className="text-lg font-bold text-foreground mb-2">Ready to subscribe?</h3>
           <p className="text-sm text-muted-foreground leading-relaxed mb-5">
             After registration, open the MyBuilding app on Android to pick a plan and pay securely.
-            iOS is on the way — Android users get the full experience today.
+            iOS is on the way - Android users get the full experience today.
           </p>
           <PlayStoreButton label="Download on Google Play" />
         </ScrollReveal>
