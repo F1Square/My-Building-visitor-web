@@ -7,6 +7,7 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
 import { useToast } from '../../components/ui/use-toast';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { UploadProgressBar } from '../../components/ui/UploadProgressBar';
 import { Lock, Receipt, Banknote, Upload, Download, Smartphone } from 'lucide-react';
 import { MobileAppPrompt, MobileOnlyButton } from '../../components/ui/MobileAppPrompt';
@@ -54,6 +55,7 @@ export default function MyPayments() {
   const [loading, setLoading] = useState(true);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [cashConfirmId, setCashConfirmId] = useState<string | null>(null);
   const [tcExpanded, setTcExpanded] = useState(false);
 
   const isLocked = user?.role !== 'admin' && !hasActiveSubscription;
@@ -94,6 +96,8 @@ export default function MyPayments() {
       void fetchPayments();
     } catch (e: unknown) {
       toast({ title: 'Error', description: (e as Error).message, variant: 'destructive' });
+    } finally {
+      setCashConfirmId(null);
     }
   };
 
@@ -225,7 +229,7 @@ export default function MyPayments() {
                     </MobileOnlyButton>
                   )}
                   {actions.includes('mark_cash') && (
-                    <Button size="sm" variant="outline" className="gap-1" onClick={() => markCash(item.id)}>
+                    <Button size="sm" variant="outline" className="gap-1" onClick={() => setCashConfirmId(item.id)}>
                       <Banknote className="w-3.5 h-3.5" /> Mark Cash
                     </Button>
                   )}
@@ -265,6 +269,15 @@ export default function MyPayments() {
           })}
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!cashConfirmId}
+        onOpenChange={o => !o && setCashConfirmId(null)}
+        title="Confirm Cash Payment"
+        description="Submit this bill as cash payment for Pramukh approval? Cancel if you tapped Cash by mistake."
+        confirmLabel="Submit Cash"
+        onConfirm={() => { if (cashConfirmId) void markCash(cashConfirmId); }}
+      />
     </div>
   );
 }

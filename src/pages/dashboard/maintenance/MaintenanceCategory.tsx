@@ -86,6 +86,7 @@ export default function MaintenanceCategory() {
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [deleteBillId, setDeleteBillId] = useState<string | null>(null);
+  const [cashConfirmId, setCashConfirmId] = useState<string | null>(null);
   const [managerTab, setManagerTab] = useState<'payments' | 'bills'>('payments');
 
   const isPramukh = user?.role === 'pramukh';
@@ -152,6 +153,8 @@ export default function MaintenanceCategory() {
       loadRecords();
     } catch (e: unknown) {
       toast({ title: 'Error', description: (e as Error).message, variant: 'destructive' });
+    } finally {
+      setCashConfirmId(null);
     }
   };
 
@@ -281,7 +284,7 @@ export default function MaintenanceCategory() {
                 </MobileOnlyButton>
               )}
               {getPaymentActions(r.status, buildingPaymentMethod).includes('mark_cash') && (
-                <Button size="sm" variant="outline" className="gap-1" onClick={() => markCash(r.id)}>
+                <Button size="sm" variant="outline" className="gap-1" onClick={() => setCashConfirmId(r.id)}>
                   <Banknote className="w-3.5 h-3.5" /> Mark Cash
                 </Button>
               )}
@@ -418,6 +421,14 @@ export default function MaintenanceCategory() {
         description="This will remove the bill and related payment records. This cannot be undone."
         confirmLabel="Delete"
         onConfirm={deleteBill}
+      />
+      <ConfirmDialog
+        open={!!cashConfirmId}
+        onOpenChange={o => !o && setCashConfirmId(null)}
+        title="Confirm Cash Payment"
+        description="Submit this bill as cash payment for Pramukh approval? Cancel if you tapped Cash by mistake."
+        confirmLabel="Submit Cash"
+        onConfirm={() => { if (cashConfirmId) void markCash(cashConfirmId); }}
       />
     </div>
   );
