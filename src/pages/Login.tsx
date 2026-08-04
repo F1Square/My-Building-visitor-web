@@ -55,7 +55,7 @@ const Login = () => {
             wordmarkClassName="text-3xl font-extrabold font-['Plus_Jakarta_Sans'] text-white"
           />
           <h2 className="text-3xl font-extrabold font-['Plus_Jakarta_Sans'] mb-4">Welcome back</h2>
-          <p className="text-primary-foreground/80 max-w-sm">Manage your society smarter. Bills, visitors, and complaints—all in one place.</p>
+          <p className="text-primary-foreground/80 max-w-sm">Manage your society smarter. Bills, visitors, and complaints -all in one place.</p>
         </div>
       </div>
 

@@ -31,6 +31,8 @@ const API_BASE =
     : "") || "http://localhost:5000/api";
 
 const STEPS = ["Your Details", "Society Info", "Payment Setup"];
+const PHONE_RE = /^[6-9]\d{9}$/;
+const stripPhone = (v: string) => v.replace(/\D/g, "").slice(0, 10);
 
 export default function RegisterSociety() {
   const { toast } = useToast();
@@ -46,6 +48,7 @@ export default function RegisterSociety() {
   // Step 1 — personal details
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [referralCode, setReferralCode] = useState("");
 
   // Step 2 — society info
@@ -150,6 +153,7 @@ export default function RegisterSociety() {
     if (step === 0) {
       if (!name.trim()) errors.name = "Name is required";
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) errors.email = "Valid email is required";
+      if (!PHONE_RE.test(phone)) errors.phone = "Enter a valid 10-digit Indian mobile number";
       const ref = referralCode.trim().toUpperCase().replace(/\s/g, "");
       if (ref && !/^[A-Z0-9]{4,12}$/.test(ref)) {
         errors.referral = "Use 4–12 letters or digits";
@@ -247,6 +251,7 @@ export default function RegisterSociety() {
         body: JSON.stringify({
           user_name: name.trim(),
           user_email: email.trim(),
+          user_phone: phone,
           society_name: societyName.trim(),
           society_type: societyType,
           total_wings: Number(totalWings),
@@ -366,6 +371,29 @@ export default function RegisterSociety() {
                   aria-invalid={!!fieldErrors.email}
                 />
                 {fieldErrors.email && <p className="text-xs text-red-500">{fieldErrors.email}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">
+                  Mobile Number <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  inputMode="numeric"
+                  placeholder="10-digit mobile number"
+                  value={phone}
+                  maxLength={10}
+                  onChange={(e) => {
+                    setPhone(stripPhone(e.target.value));
+                    setFieldErrors((prev) => {
+                      const next = { ...prev };
+                      delete next.phone;
+                      return next;
+                    });
+                  }}
+                  aria-invalid={!!fieldErrors.phone}
+                />
+                {fieldErrors.phone && <p className="text-xs text-red-500">{fieldErrors.phone}</p>}
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">

@@ -27,6 +27,7 @@ describe("RegisterSociety", () => {
     expect(screen.getByRole("heading", { name: "Your Details" })).toBeInTheDocument();
     expect(screen.getByText("Name is required")).toBeInTheDocument();
     expect(screen.getByText("Valid email is required")).toBeInTheDocument();
+    expect(screen.getByText("Enter a valid 10-digit Indian mobile number")).toBeInTheDocument();
   });
 
   it("checks an entered referral code with the server before continuing", async () => {
@@ -39,6 +40,7 @@ describe("RegisterSociety", () => {
 
     fireEvent.change(screen.getByLabelText(/Full Name/i), { target: { value: "Rajesh Patel" } });
     fireEvent.change(screen.getByLabelText(/Email Address/i), { target: { value: "raj@example.com" } });
+    fireEvent.change(screen.getByLabelText(/Mobile Number/i), { target: { value: "9876543210" } });
     fireEvent.change(screen.getByLabelText(/Referral Code/i), { target: { value: "FAKE1234" } });
     fireEvent.click(screen.getByTestId("next-step"));
 
@@ -55,6 +57,7 @@ describe("RegisterSociety", () => {
 
     fireEvent.change(screen.getByLabelText(/Full Name/i), { target: { value: "Rajesh Patel" } });
     fireEvent.change(screen.getByLabelText(/Email Address/i), { target: { value: "raj@example.com" } });
+    fireEvent.change(screen.getByLabelText(/Mobile Number/i), { target: { value: "9876543210" } });
     fireEvent.click(screen.getByTestId("next-step"));
 
     await waitFor(() => {
@@ -71,6 +74,7 @@ describe("RegisterSociety", () => {
     renderForm();
     fireEvent.change(screen.getByLabelText(/Full Name/i), { target: { value: "Rajesh Patel" } });
     fireEvent.change(screen.getByLabelText(/Email Address/i), { target: { value: "raj@example.com" } });
+    fireEvent.change(screen.getByLabelText(/Mobile Number/i), { target: { value: "9876543210" } });
     fireEvent.click(screen.getByTestId("next-step"));
     await waitFor(() => screen.getByRole("heading", { name: "Society Information" }));
 
@@ -88,6 +92,7 @@ describe("RegisterSociety", () => {
     renderForm();
     fireEvent.change(screen.getByLabelText(/Full Name/i), { target: { value: "Rajesh Patel" } });
     fireEvent.change(screen.getByLabelText(/Email Address/i), { target: { value: "raj@example.com" } });
+    fireEvent.change(screen.getByLabelText(/Mobile Number/i), { target: { value: "9876543210" } });
     fireEvent.click(screen.getByTestId("next-step"));
     await waitFor(() => screen.getByRole("heading", { name: "Society Information" }));
 

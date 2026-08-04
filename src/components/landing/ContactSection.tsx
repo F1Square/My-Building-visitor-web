@@ -7,17 +7,27 @@ import { useToast } from "@/hooks/use-toast";
 import { ScrollReveal } from "@/components/landing/scroll/ScrollReveal";
 
 const API_BASE = import.meta.env.VITE_API_BASE as string;
+const PHONE_RE = /^[6-9]\d{9}$/;
+const stripPhone = (v: string) => v.replace(/\D/g, "").slice(0, 10);
 
 const ContactSection = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
+  const [form, setForm] = useState({ name: "", email: "", phone: "", subject: "", message: "" });
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    setForm((f) => ({ ...f, [k]: e.target.value }));
+    setForm((f) => ({ ...f, [k]: k === "phone" ? stripPhone(e.target.value) : e.target.value }));
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!PHONE_RE.test(form.phone)) {
+      toast({
+        title: "Invalid mobile",
+        description: "Enter a valid 10-digit Indian mobile number.",
+        variant: "destructive",
+      });
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/contacts`, {
@@ -30,7 +40,7 @@ const ContactSection = () => {
         toast({ title: "Failed to send", description: data.error || "Something went wrong.", variant: "destructive" });
       } else {
         toast({ title: "Message sent!", description: "We'll get back to you within 24 hours." });
-        setForm({ name: "", email: "", subject: "", message: "" });
+        setForm({ name: "", email: "", phone: "", subject: "", message: "" });
       }
     } catch {
       toast({ title: "Network error", description: "Could not reach server. Try again.", variant: "destructive" });
@@ -73,6 +83,15 @@ const ContactSection = () => {
               <Input placeholder="Your name" value={form.name} onChange={set("name")} required />
               <Input type="email" placeholder="Email address" value={form.email} onChange={set("email")} required />
             </div>
+            <Input
+              type="tel"
+              inputMode="numeric"
+              placeholder="Mobile number *"
+              value={form.phone}
+              onChange={set("phone")}
+              maxLength={10}
+              required
+            />
             <Input placeholder="Subject" value={form.subject} onChange={set("subject")} required />
             <Textarea placeholder="Your message" rows={5} value={form.message} onChange={set("message")} required />
             <Button type="submit" className="w-full" size="lg" disabled={loading}>

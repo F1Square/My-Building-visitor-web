@@ -104,6 +104,14 @@ export default function Complaints() {
     setDetail(c);
     setEditStatus(c.status);
     setEditRemark(c.remark || c.pramukh_remark || '');
+    // List payloads omit photos — load detail for full photo_urls
+    api.get<Complaint>(`/complaints/${c.id}`)
+      .then((full) => {
+        setDetail(full);
+        setEditStatus(full.status);
+        setEditRemark(full.remark || full.pramukh_remark || '');
+      })
+      .catch(() => { /* keep list row data */ });
   };
 
   if (!hasActiveSub) {
@@ -179,7 +187,23 @@ export default function Complaints() {
           <DialogHeader><DialogTitle>{detail?.title}</DialogTitle></DialogHeader>
           {detail && (
             <div className="space-y-4 mt-2">
-              {detail.photo_url && <img src={detail.photo_url} alt="complaint" className="w-full h-40 object-cover rounded-xl" />}
+              {(() => {
+                const photos = detail.photo_urls?.length
+                  ? detail.photo_urls
+                  : detail.photo_url
+                    ? [detail.photo_url]
+                    : [];
+                if (!photos.length) return null;
+                return (
+                  <div className="flex gap-2 overflow-x-auto pb-1">
+                    {photos.map((url) => (
+                      <a key={url} href={url} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                        <img src={url} alt="complaint attachment" className="h-40 w-40 object-cover rounded-xl border border-gray-100" />
+                      </a>
+                    ))}
+                  </div>
+                );
+              })()}
 
               <div className="flex items-center gap-2">
                 <Badge variant={STATUS_COLORS[detail.status]}>{STATUS_LABELS[detail.status]}</Badge>

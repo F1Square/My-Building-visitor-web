@@ -96,6 +96,7 @@ export interface Complaint {
   description: string;
   status: 'open' | 'in_progress' | 'resolved';
   photo_url?: string;
+  photo_urls?: string[];
   remark?: string;
   pramukh_remark?: string;
   users?: { name: string; flat_no?: string; wing?: string };
@@ -135,8 +136,10 @@ export interface NewspaperEdition {
   building_id?: string;
   date: string;
   language: string;
+  title?: string;
   source?: string;
   url?: string;
+  file_url?: string;
 }
 
 export interface SocietyRule {
@@ -231,11 +234,18 @@ export interface Promo {
 
 export interface Inquiry {
   id: string;
-  name: string;
-  email: string;
-  message: string;
+  society_name?: string;
+  user_name?: string;
+  user_email?: string;
+  user_phone?: string;
+  city?: string;
+  state?: string;
   status?: string;
   created_at: string;
+  /** Legacy contact-form shaped fields (unused by /inquiries) */
+  name?: string;
+  email?: string;
+  message?: string;
 }
 
 export interface BankDetails {
